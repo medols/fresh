@@ -4,6 +4,7 @@ rvm:
   - rbx-2.2.10
 install:
   - git clone https://github.com/ruby/mspec.git ../mspec
+  - gem install rubinius-actor -V
 script:
   - ../mspec/bin/mspec 
 branches:
