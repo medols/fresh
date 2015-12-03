@@ -34,8 +34,8 @@ Fresh is a ruby gem.
 
 ### Credits
 
-Copyright 2015  Jaume Masip-Torne <jmasip@gianduia.net>
-          2015  Ismael Merodio-Codinachs <ismael@gianduia.net>
+    Copyright 2015  Jaume Masip-Torne <jmasip@gianduia.net>
+              2015  Ismael Merodio-Codinachs <ismael@gianduia.net>
 
 ### Running the specs
 
