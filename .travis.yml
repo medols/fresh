@@ -1,0 +1,11 @@
+sudo: false
+language: ruby
+rvm:
+  - rbx-2.2.10
+install:
+  - git clone https://github.com/ruby/mspec.git ../mspec
+script:
+  - ../mspec/bin/mspec 
+branches:
+  only:
+    - master
