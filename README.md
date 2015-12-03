@@ -6,27 +6,27 @@ Fresh is a ruby gem.
 
 ### Installation
 
-   $ gem install "fresh"
+    $ gem install "fresh"
 
 ### Usage
 
-require 'fresh'
+    require 'fresh'
 
-fresh [
-  proc{|id,all|
-    7.times{|i|
-      puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
-      sleep 1
-    }
-  },
-  proc{|id,all|
-    7.times{|i|
-      sleep 0.5 
-      puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
-      sleep 0.5 
-    }
-  }
-]
+    fresh [
+      proc{|id,all|
+        7.times{|i|
+          puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
+          sleep 1
+        }
+      },
+      proc{|id,all|
+        7.times{|i|
+          sleep 0.5 
+          puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
+          sleep 0.5 
+        }
+      }
+    ]
 
 ### Contribution
 
