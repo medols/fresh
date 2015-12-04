@@ -61,6 +61,7 @@ def mpi_gather_send grp , msg
 end
 
 def fresh m
+	STDOUT.sync = true
 	$main=m
 	$main.size.times{ |i|
         	Rubinius::Actor.spawn(i){ |id|
