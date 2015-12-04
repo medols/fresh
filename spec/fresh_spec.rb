@@ -148,5 +148,86 @@ describe "Fresh gather api" do
 
   end
 
+  it "broadcasts 0..6 individually to three nodes and gathers them for display" do
+
+    lambda{
+
+      fresh [
+
+        proc{
+          7.times{|i|
+            gr2=[1,2,3]
+            ch2=[0,0]
+            ms2=[0,0,0]
+            mpi_gather_recv gr2 , ms2 , ch2
+            puts ms2.to_s
+          }
+        },
+
+        proc{
+          7.times{|i|
+            gr1=[4]
+            ch1=[0,0]
+            ms1=[0]
+            gr2=[0]
+            ms2=[0,10]
+            mpi_gather_recv gr1 , ms1 , ch1
+            ms2[1]=ms1[0]
+            mpi_gather_send gr2 , ms2
+          }
+        },
+
+        proc{
+          7.times{|i|
+            gr1=[4]
+            ch1=[0,0]
+            ms1=[0]
+            gr2=[0]
+            ms2=[1,11]
+            mpi_gather_recv gr1 , ms1 , ch1
+            ms2[1]=ms1[0]
+            mpi_gather_send gr2 , ms2
+          }
+        },
+
+        proc{
+          7.times{|i|
+            gr1=[4]
+            ch1=[0,0]
+            ms1=[0]
+            gr2=[0]
+            ms2=[2,12]
+            mpi_gather_recv gr1 , ms1 , ch1
+            ms2[1]=ms1[0]
+            mpi_gather_send gr2 , ms2
+          }
+        },
+
+        proc{
+          7.times{|i|
+            gr1=[1,2,3]
+            ms1=[0,32]
+            ms1[1]=i
+            mpi_gather_send gr1 , ms1
+          }
+
+        }
+
+      ]
+
+    }.should output_to_fd(
+
+      "[0, 0, 0]\n"+
+      "[1, 1, 1]\n"+
+      "[2, 2, 2]\n"+
+      "[3, 3, 3]\n"+
+      "[4, 4, 4]\n"+
+      "[5, 5, 5]\n"+
+      "[6, 6, 6]\n",
+
+    STDOUT)
+
+  end
+
 end
 
