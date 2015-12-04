@@ -1,11 +1,11 @@
+sudo: false
 language: ruby
 before_install:
   - echo $TRAVIS_OS_NAME
   - echo $RVM
   - echo $LANG
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y llvm-3.4 llvm-3.4-dev; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install llvm35 && brew link --force llvm35; fi
-  - rvm use $RVM --install --fuzzy
+  - if [ $TRAVIS_OS_NAME == linux ]; then rvm use $RVM --install --binary --fuzzy; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install llvm35 && brew link --force llvm35; rvm use $RVM --install --fuzzy; fi
   - gem update --system
   - gem --version
 install:
