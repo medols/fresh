@@ -2,5 +2,5 @@ require "rubygems"
 
 $: << 'lib'
 
-require "fresh"
+require "fresh-rt"
 
