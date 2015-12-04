@@ -1,10 +1,4 @@
-sudo: false
 language: ruby
-addons:
-  apt:
-    packages:
-    - llvm-3.4
-    - llvm-3.4-dev
 before_install:
   - echo $TRAVIS_OS_NAME
   - echo $RVM
