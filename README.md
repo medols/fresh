@@ -2,6 +2,12 @@
 
 [![Build Status](https://travis-ci.org/medols/fresh.svg)](https://travis-ci.org/medols/fresh)
 
+[![Code Climate](https://codeclimate.com/repos/5661cb3f8ba8e52f200008d6/badges/40edd1dd4d705726b2a3/gpa.svg)](https://codeclimate.com/repos/5661cb3f8ba8e52f200008d6/feed)
+
+[![Test Coverage](https://codeclimate.com/repos/5661cb3f8ba8e52f200008d6/badges/40edd1dd4d705726b2a3/coverage.svg)](https://codeclimate.com/repos/5661cb3f8ba8e52f200008d6/coverage)
+
+[![Issue Count](https://codeclimate.com/repos/5661cb3f8ba8e52f200008d6/badges/40edd1dd4d705726b2a3/issue_count.svg)](https://codeclimate.com/repos/5661cb3f8ba8e52f200008d6/feed)
+
 Fresh is a ruby gem.
 
 ### Installation
@@ -29,8 +35,6 @@ Fresh is a ruby gem.
     ]
 
 ### Contribution
-
-### TODO
 
 ### Credits
 
