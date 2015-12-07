@@ -229,7 +229,7 @@ describe "Fresh gather api" do
 
   end
 
-  it "broadcasts 0..6 values from vector individually to three computing nodes and gathers them for display after processing" do
+  it "broadcasts vector values individually to three computing nodes and gathers them for display after processing" do
 
     lambda{
 
@@ -316,5 +316,96 @@ describe "Fresh gather api" do
 
   end
 
-end
+   it "broadcasts two vector values individually from two generators to three processing nodes and gathers them for display after further computations" do
 
+    lambda{
+     
+      fresh [
+        proc{
+          7.times{|i|
+            coef=[1,2,1,2,1,2,3,2,3,2]
+            val=[0]
+            gr2=[1,2,3]
+            ch2=[0,0]
+            ms2=[0,0,0]
+            mpi_gather_recv gr2 , ms2 , ch2
+            val[0] = ms2[0]*coef[7] + ms2[1]*coef[8] + ms2[2]*coef[9]
+            puts val.to_s
+          }
+        },
+        proc{
+          7.times{|i|
+            coef=[1,2,1,2,1,2,3,2,3,2]
+            gr1=[4,5]
+            ch1=[0,0]
+            ms1=[0,0]
+            gr2=[0]
+            ms2=[0,10]
+            mpi_gather_recv gr1 , ms1 , ch1
+            ms2[1]=ms1[0]*coef[1]+ms1[1]*coef[2]
+            mpi_gather_send gr2 , ms2
+          }
+        },
+        proc{
+          7.times{|i|
+            coef=[1,2,1,2,1,2,3,2,3,2]
+            gr1=[4,5]
+            ch1=[0,0]
+            ms1=[0,0]
+            gr2=[0]
+            ms2=[1,11]
+            mpi_gather_recv gr1 , ms1 , ch1
+            ms2[1]=ms1[0]*coef[3]+ms1[1]*coef[4]
+            mpi_gather_send gr2 , ms2
+          }
+        },
+        proc{
+          7.times{|i|
+            coef=[1,2,1,2,1,2,3,2,3,2]
+            gr1=[4,5]
+            ch1=[0,0]
+            ms1=[0,0]
+            gr2=[0]
+            ms2=[2,12]
+            mpi_gather_recv gr1 , ms1 , ch1
+            ms2[1]=ms1[0]*coef[5]+ms1[1]*coef[6]
+            mpi_gather_send gr2 , ms2
+          }
+        },
+        proc{
+          7.times{|i|
+            val=[4,2,3,8,4,6,1]
+            gr1=[1,2,3]
+            ms1=[0,32]
+            ms1[1]=val[i]
+            mpi_gather_send gr1 , ms1
+          }
+        },
+        proc{
+          7.times{|i|
+            val=[2,4,8,16,32,64,48]
+            gr1=[1,2,3]
+            ms1=[1,32]
+            ms1[1]=val[i]
+            mpi_gather_send gr1 , ms1
+          }
+        }
+      
+      ]
+
+     }.should output_to_fd(
+
+      "[78]\n"+
+      "[72]\n"+
+      "[130]\n"+
+      "[288]\n"+
+      "[408]\n"+
+      "[788]\n"+
+      "[542]\n",
+
+    STDOUT)
+
+  end
+
+end
+     
