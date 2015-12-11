@@ -53,26 +53,26 @@ describe "Fresh gather api" do
           gr2=[1,2,3]
           chc=[0,0]
           msg=[0,0,0]
-          mpi_gather_recv gr2 , msg , chc
+          mpi_gather gr2 , msg , chc
           puts msg.to_s
         },
 
         proc{
           gr2=[0]
           msg=[0,10]
-          mpi_gather_send gr2 , msg
+          mpi_bcast gr2 , msg
         },
 
         proc{
           gr2=[0]
           msg=[1,11]
-          mpi_gather_send gr2 , msg
+          mpi_bcast gr2 , msg
         },
 
         proc{
           gr2=[0]
           msg=[2,12]
-          mpi_gather_send gr2 , msg 
+          mpi_bcast gr2 , msg 
         }
 
       ]
@@ -95,7 +95,7 @@ describe "Fresh gather api" do
           gr2=[1,2,3]
           ch2=[0,0]
           ms2=[0,0,0]
-          mpi_gather_recv gr2 , ms2 , ch2
+          mpi_gather gr2 , ms2 , ch2
           puts ms2.to_s
         },
 
@@ -105,9 +105,9 @@ describe "Fresh gather api" do
           ms1=[0]
           gr2=[0]
           ms2=[0,10]
-          mpi_gather_recv gr1 , ms1 , ch1
+          mpi_gather gr1 , ms1 , ch1
           ms2[1]=ms1[0]
-          mpi_gather_send gr2 , ms2
+          mpi_bcast gr2 , ms2
         },
 
         proc{
@@ -116,9 +116,9 @@ describe "Fresh gather api" do
           ms1=[0]
           gr2=[0]
           ms2=[1,11]
-          mpi_gather_recv gr1 , ms1 , ch1
+          mpi_gather gr1 , ms1 , ch1
           ms2[1]=ms1[0]
-          mpi_gather_send gr2 , ms2
+          mpi_bcast gr2 , ms2
         },
 
         proc{
@@ -127,15 +127,15 @@ describe "Fresh gather api" do
           ms1=[0]
           gr2=[0]
           ms2=[2,12]
-          mpi_gather_recv gr1 , ms1 , ch1
+          mpi_gather gr1 , ms1 , ch1
           ms2[1]=ms1[0]
-          mpi_gather_send gr2 , ms2
+          mpi_bcast gr2 , ms2
         },
 
         proc{
           gr1=[1,2,3]
           ms1=[0,32]
-          mpi_gather_send gr1 , ms1
+          mpi_bcast gr1 , ms1
         }
 
       ]
@@ -159,7 +159,7 @@ describe "Fresh gather api" do
             gr2=[1,2,3]
             ch2=[0,0]
             ms2=[0,0,0]
-            mpi_gather_recv gr2 , ms2 , ch2
+            mpi_gather gr2 , ms2 , ch2
             puts ms2.to_s
           }
         },
@@ -171,9 +171,9 @@ describe "Fresh gather api" do
             ms1=[0]
             gr2=[0]
             ms2=[0,10]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
 
@@ -184,9 +184,9 @@ describe "Fresh gather api" do
             ms1=[0]
             gr2=[0]
             ms2=[1,11]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
 
@@ -197,9 +197,9 @@ describe "Fresh gather api" do
             ms1=[0]
             gr2=[0]
             ms2=[2,12]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
 
@@ -208,7 +208,7 @@ describe "Fresh gather api" do
             gr1=[1,2,3]
             ms1=[0,32]
             ms1[1]=i
-            mpi_gather_send gr1 , ms1
+            mpi_bcast gr1 , ms1
           }
 
         }
@@ -242,7 +242,7 @@ describe "Fresh gather api" do
             gr2=[1,2,3]
             ch2=[0,0]
             ms2=[0,0,0]
-            mpi_gather_recv gr2 , ms2 , ch2
+            mpi_gather gr2 , ms2 , ch2
             val[0] = ms2[0]*coef[7] + ms2[1]*coef[8] + ms2[2]*coef[9]
             puts val.to_s
           }
@@ -256,9 +256,9 @@ describe "Fresh gather api" do
             ms1=[0]
             gr2=[0]
             ms2=[0,10]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]*coef[1]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
 
@@ -270,9 +270,9 @@ describe "Fresh gather api" do
             ms1=[0]
             gr2=[0]
             ms2=[1,11]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]*coef[3]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
 
@@ -284,9 +284,9 @@ describe "Fresh gather api" do
             ms1=[0]
             gr2=[0]
             ms2=[2,12]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]*coef[5]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
 
@@ -296,7 +296,7 @@ describe "Fresh gather api" do
             ms1=[0,32]
             val=[4,2,3,8,4,6,1]
             ms1[1]=val[i]
-            mpi_gather_send gr1 , ms1
+            mpi_bcast gr1 , ms1
           }
         }
 
@@ -328,7 +328,7 @@ describe "Fresh gather api" do
             gr2=[1,2,3]
             ch2=[0,0]
             ms2=[0,0,0]
-            mpi_gather_recv gr2 , ms2 , ch2
+            mpi_gather gr2 , ms2 , ch2
             val[0] = ms2[0]*coef[7] + ms2[1]*coef[8] + ms2[2]*coef[9]
             puts val.to_s
           }
@@ -341,9 +341,9 @@ describe "Fresh gather api" do
             ms1=[0,0]
             gr2=[0]
             ms2=[0,10]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]*coef[1]+ms1[1]*coef[2]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
         proc{
@@ -354,9 +354,9 @@ describe "Fresh gather api" do
             ms1=[0,0]
             gr2=[0]
             ms2=[1,11]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]*coef[3]+ms1[1]*coef[4]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
         proc{
@@ -367,9 +367,9 @@ describe "Fresh gather api" do
             ms1=[0,0]
             gr2=[0]
             ms2=[2,12]
-            mpi_gather_recv gr1 , ms1 , ch1
+            mpi_gather gr1 , ms1 , ch1
             ms2[1]=ms1[0]*coef[5]+ms1[1]*coef[6]
-            mpi_gather_send gr2 , ms2
+            mpi_bcast gr2 , ms2
           }
         },
         proc{
@@ -378,7 +378,7 @@ describe "Fresh gather api" do
             gr1=[1,2,3]
             ms1=[0,32]
             ms1[1]=val[i]
-            mpi_gather_send gr1 , ms1
+            mpi_bcast gr1 , ms1
           }
         },
         proc{
@@ -387,7 +387,7 @@ describe "Fresh gather api" do
             gr1=[1,2,3]
             ms1=[1,32]
             ms1[1]=val[i]
-            mpi_gather_send gr1 , ms1
+            mpi_bcast gr1 , ms1
           }
         }
       

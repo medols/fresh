@@ -42,7 +42,7 @@ def mpi_end id, all
 	$node[id]=false
 end
 
-def mpi_gather_recv grp , inv, chc
+def mpi_gather grp , inv, chc
         grp.each{ |s|
                 res=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
                 inv[res[0]..(res[0]+res[1..-1].size-1)]=res[1..-1]
@@ -51,7 +51,7 @@ def mpi_gather_recv grp , inv, chc
         inv=inv.flatten
 end
 
-def mpi_gather_send grp , msg
+def mpi_bcast grp , msg
         grp.each{ |s|
                 $node[s] << msg
         }
