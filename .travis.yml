@@ -3,8 +3,12 @@ before_install:
   - echo $TRAVIS_OS_NAME
   - echo $RVM
   - echo $LANG
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y llvm-3.4 llvm-3.4-dev && rvm use $RVM --install --fuzzy ; fi
-  - if [ $TRAVIS_OS_NAME ==   osx ]; then brew update && brew install llvm35 && brew link --force llvm35; rvm use $RVM --install --fuzzy ; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update ; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y llvm-3.4 llvm-3.4-dev ; fi
+  - if [ $TRAVIS_OS_NAME ==   osx ]; then brew update ; fi
+  - if [ $TRAVIS_OS_NAME ==   osx ]; then brew install llvm35 ; fi
+  - if [ $TRAVIS_OS_NAME ==   osx ]; then brew link --force llvm35 ; fi
+  - rvm use $RVM --install --fuzzy
 install:
   - gem install rubinius-actor -V
   - git clone https://github.com/ruby/mspec.git ../mspec
