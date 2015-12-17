@@ -56,21 +56,23 @@ def mpi_bcast buf , comm
                 $node[s] << buf
         }
         comm.each{ |s|
-                res=Rubinius::Actor.receive{|f| f.when(:ack){|m| m} }
+                Rubinius::Actor.receive{|f| f.when(:ack){|m| m} }
         }
 end
 
 def fresh m
-	STDOUT.sync = true
+	$stdout.sync = true
 	$main=m
+	$return=[]
 	$main.size.times{ |i|
         	Rubinius::Actor.spawn(i){ |id|
 			Rubinius::Actor.trap_exit = true
         	        mpi_init id, $main.size
-        	        $main[id].call id, $main.size
+        	        $return[id]=$main[id].call id, $main.size
 			mpi_end id, $main.size
         	}
 	}
 	sleep 0.1 until $node.none?
+	$return[0]
 end
 
