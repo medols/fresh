@@ -6,25 +6,25 @@ describe "The usage sample from https://github.com/medols/fresh#usage" do
 
   lambda{
 
-    fresh [
+    fresh( 
 
-      proc{|id,all|
+      proc{|rank,size|
         3.times{|i|
           sleep 0.25
-          puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
+          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
           sleep 0.75
         }
       },
 
-      proc{|id,all|
+      proc{|rank,size|
         3.times{|i|
           sleep 0.75 
-          puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
+          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
           sleep 0.25 
         }
       }
 
-    ]
+    )
 
   }.should output_to_fd(
 
@@ -45,7 +45,7 @@ describe "Fresh gather api" do
 
   it "gathers one integer from three nodes" do
 
-      fresh([
+      fresh(
 
         proc{
           sbuf=[0,0]
@@ -73,13 +73,13 @@ describe "Fresh gather api" do
           mpi_bcast buf , comm
         }
 
-      ]).first.should == [10, 11, 12]
+      ).first.should == [10, 11, 12]
 
   end
 
   it "broadcasts one integer to three nodes, then gathers this integer from them" do
 
-      fresh([
+      fresh(
 
         proc{
           gr2=[1,2,3]
@@ -128,13 +128,13 @@ describe "Fresh gather api" do
           mpi_bcast ms1 , gr1
         }
 
-      ]).first.should == [32, 32, 32]
+      ).first.should == [32, 32, 32]
 
   end
 
   it "broadcasts 0..6 individually to three nodes and gathers them for display" do
 
-      fresh([
+      fresh(
 
         proc{
           7.times.map{|i|
@@ -195,7 +195,7 @@ describe "Fresh gather api" do
 
         }
 
-      ]).first.should == [
+      ).first.should == [
         [0, 0, 0], 
         [1, 1, 1], 
         [2, 2, 2], 
@@ -209,7 +209,7 @@ describe "Fresh gather api" do
 
   it "broadcasts vector values individually to three computing nodes and gathers them for display after processing" do
 
-      fresh([
+      fresh(
 
         proc{
           7.times.map{|i|
@@ -276,13 +276,13 @@ describe "Fresh gather api" do
           }
         }
 
-      ]).first.should == [[56], [28], [42], [112], [56], [84], [14]] 
+      ).first.should == [[56], [28], [42], [112], [56], [84], [14]] 
 
   end
 
    it "broadcasts two vector values individually from two generators to three processing nodes and gathers them for display after further computations" do
 
-      fresh([
+      fresh(
         proc{
           7.times.map{|i|
             coef=[1,2,1,2,1,2,3,2,3,2]
@@ -353,7 +353,7 @@ describe "Fresh gather api" do
           }
         }
       
-      ]).first.should == [[78], [72], [130], [288], [408], [788], [542]] 
+      ).first.should == [[78], [72], [130], [288], [408], [788], [542]] 
 
   end
 

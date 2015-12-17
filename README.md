@@ -19,16 +19,16 @@ Fresh is a ruby gem.
     require 'fresh'
 
     fresh [
-      proc{|id,all|
+      proc{|rank,size|
         7.times{|i|
-          puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
+          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
           sleep 1
         }
       },
-      proc{|id,all|
+      proc{|rank,size|
         7.times{|i|
           sleep 0.5 
-          puts "Iter #{i+1} from node #{id+1} of #{all} nodes"
+          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
           sleep 0.5 
         }
       }

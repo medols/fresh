@@ -31,15 +31,15 @@
 
 require "rubinius/actor"
 
-def mpi_init id, all
-	$node ||= all.times.map{false}
-	symid = ("n"+id.to_s).to_sym
-	$node[id] = Rubinius::Actor[symid] = Rubinius::Actor.current
+def mpi_init rank, size
+	$node ||= size.times.map{false}
+	symid = ("n"+rank.to_s).to_sym
+	$node[rank] = Rubinius::Actor[symid] = Rubinius::Actor.current
 	sleep 0.1 until $node.all? 
 end
 
-def mpi_end id, _all
-	$node[id]=false
+def mpi_end rank, _size
+	$node[rank]=false
 end
 
 def mpi_gather sbuf , rbuf, comm
@@ -60,16 +60,16 @@ def mpi_bcast buf , comm
         }
 end
 
-def fresh m
+def fresh *m
 	$stdout.sync = true
-	$main=m
+	$main=m.flatten
 	$return=[]
 	$main.size.times{ |i|
-        	Rubinius::Actor.spawn(i){ |id|
+        	Rubinius::Actor.spawn(i){ |rank|
 			Rubinius::Actor.trap_exit = true
-        	        mpi_init id, $main.size
-        	        $return[id]=$main[id].call id, $main.size
-			mpi_end id, $main.size
+        	        mpi_init rank, $main.size
+        	        $return[rank]=$main[rank].call rank, $main.size
+			mpi_end rank, $main.size
         	}
 	}
 	sleep 0.1 until $node.none?
