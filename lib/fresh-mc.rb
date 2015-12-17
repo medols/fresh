@@ -38,12 +38,12 @@ def mpi_init id, all
 	sleep 0.1 until $node.all? 
 end
 
-def mpi_end id, all
+def mpi_end id, _all
 	$node[id]=false
 end
 
 def mpi_gather sbuf , rbuf, comm
-        comm.each{ |s|
+        comm.each{
                 sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
                 rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
         }
@@ -55,7 +55,7 @@ def mpi_bcast buf , comm
         comm.each{ |s|
                 $node[s] << buf
         }
-        comm.each{ |s|
+        comm.each{
                 Rubinius::Actor.receive{|f| f.when(:ack){|m| m} }
         }
 end
