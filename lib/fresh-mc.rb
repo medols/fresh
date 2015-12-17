@@ -73,6 +73,6 @@ def fresh m
         	}
 	}
 	sleep 0.1 until $node.none?
-	$return[0]
+	$return
 end
 

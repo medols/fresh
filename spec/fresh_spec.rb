@@ -84,7 +84,40 @@ describe "Fresh gather api" do
     STDOUT)
   
   end
+  
+  it "three to one" do
 
+      fresh([
+
+        proc{
+          sbuf=[0,0]
+          rbuf=[0,0,0]
+          comm=[1,2,3]
+          mpi_gather sbuf , rbuf , comm
+          rbuf
+        },
+
+        proc{
+          buf=[0,10]
+          comm=[0]
+          mpi_bcast buf , comm
+        },
+
+        proc{
+          buf=[1,11]
+          comm=[0]
+          mpi_bcast buf , comm
+        },
+
+        proc{
+          buf=[2,12]
+          comm=[0]
+          mpi_bcast buf , comm
+        }
+
+      ])[0].should == [10, 11, 12]
+
+  end
   it "broadcasts one integer to three nodes, then gathers this integer from them" do
 
     lambda{
