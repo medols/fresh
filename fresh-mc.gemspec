@@ -3,7 +3,7 @@
 Gem::Specification.new do |s|
   s.name = %q{fresh-mc}
   s.version = "0.0.1" unless ENV['TRAVIS']
-  s.version = "#{s.version}-alpha-#{ENV['TRAVIS_BUILD_NUMBER']}" if ENV['TRAVIS']
+  s.version = "0.0.2-alpha-#{ENV['TRAVIS_BUILD_NUMBER']}" if ENV['TRAVIS']
   s.authors = ["Jaume Masip-Torne", "Ismael Merodio-Codinachs"]
   s.date = Time.now
   s.description = "Fresh gem for many-core processing"
