@@ -150,7 +150,7 @@ Style/CommandLiteral:
 Style/CommentAnnotation:
   Description: >-
                  Checks formatting of special comments
-                 (TODO, FIXME, OPTIMIZE, HACK, REVIEW).
+                 (todo, fixme, optimize, hack, review).
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#annotate-keywords'
   Enabled: false
 
