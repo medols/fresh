@@ -45,48 +45,6 @@ describe "Fresh gather api" do
 
   it "gathers one integer from three nodes" do
 
-    lambda{
-
-      fresh [
-
-        proc{
-          gr2=[1,2,3]
-          chc=[0,0]
-          msg=[0,0,0]
-          mpi_gather chc , msg , gr2
-          puts msg.to_s
-        },
-
-        proc{
-          gr2=[0]
-          msg=[0,10]
-          mpi_bcast msg , gr2
-        },
-
-        proc{
-          gr2=[0]
-          msg=[1,11]
-          mpi_bcast msg , gr2
-        },
-
-        proc{
-          gr2=[0]
-          msg=[2,12]
-          mpi_bcast msg , gr2 
-        }
-
-      ]
-
-    }.should output_to_fd(
-
-      "[10, 11, 12]\n",
-
-    STDOUT)
-  
-  end
-  
-  it "three to one" do
-
       fresh([
 
         proc{
@@ -115,21 +73,20 @@ describe "Fresh gather api" do
           mpi_bcast buf , comm
         }
 
-      ])[0].should == [10, 11, 12]
+      ]).first.should == [10, 11, 12]
 
   end
+
   it "broadcasts one integer to three nodes, then gathers this integer from them" do
 
-    lambda{
-
-      fresh [
+      fresh([
 
         proc{
           gr2=[1,2,3]
           ch2=[0,0]
           ms2=[0,0,0]
           mpi_gather ch2 , ms2 , gr2
-          puts ms2.to_s
+          ms2
         },
 
         proc{
@@ -171,29 +128,21 @@ describe "Fresh gather api" do
           mpi_bcast ms1 , gr1
         }
 
-      ]
-
-    }.should output_to_fd(
-
-      "[32, 32, 32]\n",
-
-    STDOUT)
+      ]).first.should == [32, 32, 32]
 
   end
 
   it "broadcasts 0..6 individually to three nodes and gathers them for display" do
 
-    lambda{
-
-      fresh [
+      fresh([
 
         proc{
-          7.times{|i|
+          7.times.map{|i|
             gr2=[1,2,3]
             ch2=[0,0]
             ms2=[0,0,0]
             mpi_gather ch2 , ms2 , gr2
-            puts ms2.to_s
+            ms2
           }
         },
 
@@ -246,30 +195,24 @@ describe "Fresh gather api" do
 
         }
 
+      ]).first.should == [
+        [0, 0, 0], 
+        [1, 1, 1], 
+        [2, 2, 2], 
+        [3, 3, 3], 
+        [4, 4, 4], 
+        [5, 5, 5], 
+        [6, 6, 6]
       ]
-
-    }.should output_to_fd(
-
-      "[0, 0, 0]\n"+
-      "[1, 1, 1]\n"+
-      "[2, 2, 2]\n"+
-      "[3, 3, 3]\n"+
-      "[4, 4, 4]\n"+
-      "[5, 5, 5]\n"+
-      "[6, 6, 6]\n",
-
-    STDOUT)
 
   end
 
   it "broadcasts vector values individually to three computing nodes and gathers them for display after processing" do
 
-    lambda{
-
-      fresh [
+      fresh([
 
         proc{
-          7.times{|i|
+          7.times.map{|i|
             coef=[1,2,1,2,1,2,3,2,3,2]
             val=[0]
             gr2=[1,2,3]
@@ -277,7 +220,7 @@ describe "Fresh gather api" do
             ms2=[0,0,0]
             mpi_gather ch2 , ms2 , gr2
             val[0] = ms2[0]*coef[7] + ms2[1]*coef[8] + ms2[2]*coef[9]
-            puts val.to_s
+            val
           }
         },
 
@@ -333,29 +276,15 @@ describe "Fresh gather api" do
           }
         }
 
-      ]
-
-    }.should output_to_fd(
-
-      "[56]\n"+
-      "[28]\n"+
-      "[42]\n"+
-      "[112]\n"+
-      "[56]\n"+
-      "[84]\n"+
-      "[14]\n",
-
-    STDOUT)
+      ]).first.should == [[56], [28], [42], [112], [56], [84], [14]] 
 
   end
 
    it "broadcasts two vector values individually from two generators to three processing nodes and gathers them for display after further computations" do
 
-    lambda{
-     
-      fresh [
+      fresh([
         proc{
-          7.times{|i|
+          7.times.map{|i|
             coef=[1,2,1,2,1,2,3,2,3,2]
             val=[0]
             gr2=[1,2,3]
@@ -363,7 +292,7 @@ describe "Fresh gather api" do
             ms2=[0,0,0]
             mpi_gather ch2 , ms2 , gr2
             val[0] = ms2[0]*coef[7] + ms2[1]*coef[8] + ms2[2]*coef[9]
-            puts val.to_s
+            val
           }
         },
         proc{
@@ -424,21 +353,9 @@ describe "Fresh gather api" do
           }
         }
       
-      ]
-
-     }.should output_to_fd(
-
-      "[78]\n"+
-      "[72]\n"+
-      "[130]\n"+
-      "[288]\n"+
-      "[408]\n"+
-      "[788]\n"+
-      "[542]\n",
-
-    STDOUT)
+      ]).first.should == [[78], [72], [130], [288], [408], [788], [542]] 
 
   end
 
 end
-     
+ 
