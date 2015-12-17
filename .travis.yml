@@ -1,15 +1,6 @@
 language: ruby
-before_install:
-  - echo $TRAVIS_OS_NAME
-  - echo $RVM
-  - echo $LANG
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update ; fi
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y llvm-3.4 llvm-3.4-dev ; fi
-  - if [ $TRAVIS_OS_NAME ==   osx ]; then brew update ; fi
-  - if [ $TRAVIS_OS_NAME ==   osx ]; then brew install llvm35 ; fi
-  - if [ $TRAVIS_OS_NAME ==   osx ]; then brew link --force llvm35 ; fi
-  - rvm install $RVM
-  - rvm use $RVM 
+rvm:
+  - rbx-2.6
 install:
   - gem install rubinius-actor -V
   - git clone https://github.com/ruby/mspec.git ../mspec
@@ -18,9 +9,6 @@ script:
 branches:
   only:
     - master
-env:
-  matrix:
-  - RVM=rbx-2.2.10 LANG="en_US.UTF-8"
 os:
 - linux
 - osx
