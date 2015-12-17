@@ -8,7 +8,7 @@ before_install:
   - if [ $TRAVIS_OS_NAME ==   osx ]; then brew update ; fi
   - if [ $TRAVIS_OS_NAME ==   osx ]; then brew install llvm35 ; fi
   - if [ $TRAVIS_OS_NAME ==   osx ]; then brew link --force llvm35 ; fi
-  - rvm --trace install $RVM
+  - rvm install $RVM
   - rvm use $RVM 
 install:
   - gem install rubinius-actor -V
