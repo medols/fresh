@@ -83,7 +83,7 @@ def mpi_gather_tx sbuf , rbuf , root , comm , rr
   mpi_bcast tbuf , rcomm
 end
 
-def mpi_gather_rx sbuf , rbuf , root , comm , rr
+def mpi_gather_rx sbuf , rbuf , _root , comm , _rr
     mpi_gather sbuf , rbuf , comm
 end
 
@@ -92,12 +92,12 @@ def mpi_gatherv sbuf , rbuf , root , comm , rr
    mpi_gather_tx sbuf , rbuf , root , comm , rr  if comm.include? rr
 end
 
-def mpi_bcast_tx sbuf , rbuf , root , comm , rr
+def mpi_bcast_tx sbuf , _rbuf , _root , comm , _rr
   tbuf=[0].concat sbuf
   mpi_bcast tbuf , comm
 end
 
-def mpi_bcast_rx sbuf , rbuf , root , comm , rr
+def mpi_bcast_rx sbuf , rbuf , root , _comm , _rr
   mpi_gather sbuf , rbuf , [ root ]
 end
 
@@ -106,13 +106,13 @@ def mpi_bcastv sbuf , rbuf , root , comm , rr
    mpi_bcast_rx sbuf , rbuf , root , comm , rr  if comm.include? rr
 end
 
-def mpi_allgather_tx sbuf , rbuf , root , comm , rr
+def mpi_allgather_tx sbuf , _rbuf , root , comm , rr
   rnod=root.find_index(rr)
   tbuf=[rnod].concat sbuf
   mpi_bcast tbuf , comm
 end
 
-def mpi_allgather_rx sbuf , rbuf , root , comm , rr
+def mpi_allgather_rx sbuf , rbuf , root , _comm , _rr
   mpi_gather sbuf , rbuf , root
 end
 
@@ -121,9 +121,9 @@ def mpi_allgatherv sbuf , rbuf , root , comm , rr
    mpi_allgather_rx sbuf , rbuf , root , comm , rr  if comm.include? rr
 end
 
-def proc_mult sz , pr_one
-  pa=[ proc{ |rk,sz| pr_one } ] * sz
-  pa.each_with_index.map{|f,rk| f.call(rk,sz)}
+def proc_mult pr_size , pr_one
+  pa=[ proc{ |rk,sz| pr_one } ] * pr_size
+  pa.each_with_index.map{|f,rk| f.call(rk,pr_size)}
 end
 
 class Proc
