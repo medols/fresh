@@ -8,31 +8,23 @@
 
 [![Issue Count](https://codeclimate.com/github/medols/fresh/badges/issue_count.svg)](https://codeclimate.com/github/medols/fresh)
 
-Fresh is a ruby gem.
+Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
 ### Installation
 
-    $ gem install "fresh"
+    $ gem install "fresh-mc"
 
 ### Usage
 
-    require 'fresh'
+    require 'fresh-mc'
 
-    fresh [
-      proc{|rank,size|
-        7.times{|i|
-          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
-          sleep 1
-        }
-      },
-      proc{|rank,size|
-        7.times{|i|
-          sleep 0.5 
-          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
-          sleep 0.5 
-        }
+    proc{|rank,size|
+      7.times{|i|
+        sleep 0.25+0.5*rank
+        puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
+        sleep 0.75-0.5*rank
       }
-    ]
+    }*2
 
 ### Contribution
 

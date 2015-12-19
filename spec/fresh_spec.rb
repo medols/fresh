@@ -1,361 +1,164 @@
 require File.expand_path('../spec_helper', __FILE__)
 
-describe "The usage sample from https://github.com/medols/fresh#usage" do
+describe "proc mpi api" do
 
-  it "alternates messages from two actors" do
+  it "mpi_gatherv" do
 
-  lambda{
+    (proc{|rank,size|
+      sbuf=[rank+9]
+      rbuf=[0,0,0]
+      root=0
+      comm=[1,2,3]
 
-    fresh( 
+      mpi_gatherv sbuf , rbuf , root , comm , rank
+      rbuf
+    }*4).should==[[10,11,12],[0,0,0],[0,0,0],[0,0,0]]
 
-      proc{|rank,size|
-        3.times{|i|
-          sleep 0.25
-          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
-          sleep 0.75
-        }
-      },
-
-      proc{|rank,size|
-        3.times{|i|
-          sleep 0.75 
-          puts "Iter #{i+1} from node #{rank+1} of #{size} nodes"
-          sleep 0.25 
-        }
-      }
-
-    )
-
-  }.should output_to_fd(
-
-    "Iter 1 from node 1 of 2 nodes\n"+
-    "Iter 1 from node 2 of 2 nodes\n"+
-    "Iter 2 from node 1 of 2 nodes\n"+
-    "Iter 2 from node 2 of 2 nodes\n"+
-    "Iter 3 from node 1 of 2 nodes\n"+
-    "Iter 3 from node 2 of 2 nodes\n",
-
-    STDOUT)
-  
   end
 
-end
-
-describe "Fresh gather api" do
-
-  it "gathers one integer from three nodes" do
-
-      fresh(
-
-        proc{
-          sbuf=[0,0]
-          rbuf=[0,0,0]
+  it "mpi_bcastv" do
+    (proc{|rank,size|
+          sbuf=[32]
+          rbuf=[0]
+          root=0
           comm=[1,2,3]
-          mpi_gather sbuf , rbuf , comm
+
+          mpi_bcastv sbuf , rbuf , root , comm , rank
           rbuf
-        },
-
-        proc{
-          buf=[0,10]
-          comm=[0]
-          mpi_bcast buf , comm
-        },
-
-        proc{
-          buf=[1,11]
-          comm=[0]
-          mpi_bcast buf , comm
-        },
-
-        proc{
-          buf=[2,12]
-          comm=[0]
-          mpi_bcast buf , comm
-        }
-
-      ).first.should == [10, 11, 12]
-
+    }*4).should == [[0], [32], [32], [32]]
   end
 
-  it "broadcasts one integer to three nodes, then gathers this integer from them" do
+  it "first mpi_bcastv then mpi_gatherv" do
+    (proc{ |rank,size|
+      sbuf1=[32]
+      rbuf1=[0]
+      root1=4
+      comm1=[1,2,3]
 
-      fresh(
+      mpi_bcastv sbuf1 , rbuf1 , root1 , comm1 , rank 
 
-        proc{
-          gr2=[1,2,3]
-          ch2=[0,0]
-          ms2=[0,0,0]
-          mpi_gather ch2 , ms2 , gr2
-          ms2
-        },
+      sbuf2=[0]
+      rbuf2=[0,0,0]
+      root2=0
+      comm2=[1,2,3]
 
-        proc{
-          gr1=[4]
-          ch1=[0,0]
-          ms1=[0]
-          gr2=[0]
-          ms2=[0,10]
-          mpi_gather ch1 , ms1 , gr1
-          ms2[1]=ms1[0]
-          mpi_bcast ms2 , gr2
-        },
-
-        proc{
-          gr1=[4]
-          ch1=[0,0]
-          ms1=[0]
-          gr2=[0]
-          ms2=[1,11]
-          mpi_gather ch1 , ms1 , gr1
-          ms2[1]=ms1[0]
-          mpi_bcast ms2 , gr2
-        },
-
-        proc{
-          gr1=[4]
-          ch1=[0,0]
-          ms1=[0]
-          gr2=[0]
-          ms2=[2,12]
-          mpi_gather ch1 , ms1 , gr1
-          ms2[1]=ms1[0]
-          mpi_bcast ms2 , gr2
-        },
-
-        proc{
-          gr1=[1,2,3]
-          ms1=[0,32]
-          mpi_bcast ms1 , gr1
-        }
-
-      ).first.should == [32, 32, 32]
-
+      sbuf2[0]=rbuf1[0]
+      mpi_gatherv sbuf2 , rbuf2 , root2 , comm2 , rank 
+      rbuf2
+    }*5).should == [
+      [32, 32, 32], 
+      [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]
+    ]
   end
 
-  it "broadcasts 0..6 individually to three nodes and gathers them for display" do
+  it "first bcastv then gatherv loop" do
+    (proc{ |rank,size|
+      7.times.map{|i|
+        sbuf1=[0]
+        rbuf1=[0]
+        root1=4
+        comm1=[1,2,3]
 
-      fresh(
+        sbuf1[0]=i
+        mpi_bcastv sbuf1 , rbuf1 , root1 , comm1 , rank 
 
-        proc{
-          7.times.map{|i|
-            gr2=[1,2,3]
-            ch2=[0,0]
-            ms2=[0,0,0]
-            mpi_gather ch2 , ms2 , gr2
-            ms2
-          }
-        },
+        sbuf2=[0]
+        rbuf2=[0,0,0]
+        root2=0
+        comm2=[1,2,3]
 
-        proc{
-          7.times{|i|
-            gr1=[4]
-            ch1=[0,0]
-            ms1=[0]
-            gr2=[0]
-            ms2=[0,10]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]
-            mpi_bcast ms2 , gr2
-          }
-        },
-
-        proc{
-          7.times{|i|
-            gr1=[4]
-            ch1=[0,0]
-            ms1=[0]
-            gr2=[0]
-            ms2=[1,11]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]
-            mpi_bcast ms2 , gr2
-          }
-        },
-
-        proc{
-          7.times{|i|
-            gr1=[4]
-            ch1=[0,0]
-            ms1=[0]
-            gr2=[0]
-            ms2=[2,12]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]
-            mpi_bcast ms2 , gr2
-          }
-        },
-
-        proc{
-          7.times{|i|
-            gr1=[1,2,3]
-            ms1=[0,32]
-            ms1[1]=i
-            mpi_bcast ms1 , gr1
-          }
-
-        }
-
-      ).first.should == [
-        [0, 0, 0], 
-        [1, 1, 1], 
-        [2, 2, 2], 
-        [3, 3, 3], 
-        [4, 4, 4], 
-        [5, 5, 5], 
-        [6, 6, 6]
-      ]
-
+        sbuf2[0]=rbuf1[0]
+        mpi_gatherv sbuf2 , rbuf2 , root2 , comm2 , rank 
+        rbuf2
+      }
+    }*5).first.should == [
+      [0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], 
+      [4, 4, 4], [5, 5, 5], [6, 6, 6]
+    ]
   end
 
-  it "broadcasts vector values individually to three computing nodes and gathers them for display after processing" do
+  it "first bcastv then signal processing with gatherv" do
+    (proc{ |rank,size|
+      7.times.map{|i|
+        sbuf1=[0]
+        rbuf1=[0]
+        root1=4
+        comm1=[1,2,3]
 
-      fresh(
+        val=[4,2,3,8,4,6,1]
+        sbuf1[0]=val[i]
+        mpi_bcastv sbuf1 , rbuf1 , root1 , comm1 , rank 
 
-        proc{
-          7.times.map{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            val=[0]
-            gr2=[1,2,3]
-            ch2=[0,0]
-            ms2=[0,0,0]
-            mpi_gather ch2 , ms2 , gr2
-            val[0] = ms2[0]*coef[7] + ms2[1]*coef[8] + ms2[2]*coef[9]
-            val
-          }
-        },
+        sbuf2=[0]
+        rbuf2=[0,0,0]
+        root2=0
+        comm2=[1,2,3]
 
-        proc{
-          7.times{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            gr1=[4]
-            ch1=[0,0]
-            ms1=[0]
-            gr2=[0]
-            ms2=[0,10]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]*coef[1]
-            mpi_bcast ms2 , gr2
-          }
-        },
+        coef=[1,2,1,2,1,2,3,2,3,2]
+        val=[0]
 
-        proc{
-          7.times{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            gr1=[4]
-            ch1=[0,0]
-            ms1=[0]
-            gr2=[0]
-            ms2=[1,11]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]*coef[3]
-            mpi_bcast ms2 , gr2
-          }
-        },
+        sbuf2[0]=rbuf1[0]*coef[1+(rank-1)*2]
+        mpi_gatherv sbuf2 , rbuf2 , root2 , comm2 , rank 
 
-        proc{
-          7.times{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            gr1=[4]
-            ch1=[0,0]
-            ms1=[0]
-            gr2=[0]
-            ms2=[2,12]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]*coef[5]
-            mpi_bcast ms2 , gr2
-          }
-        },
-
-        proc{
-          7.times{|i|
-            gr1=[1,2,3]
-            ms1=[0,32]
-            val=[4,2,3,8,4,6,1]
-            ms1[1]=val[i]
-            mpi_bcast ms1 , gr1
-          }
-        }
-
-      ).first.should == [[56], [28], [42], [112], [56], [84], [14]] 
-
+        val[0] = rbuf2[0]*coef[7] + rbuf2[1]*coef[8] + rbuf2[2]*coef[9]
+        val
+      }
+    }*5).first.should == [[56], [28], [42], [112], [56], [84], [14]]
   end
 
-   it "broadcasts two vector values individually from two generators to three processing nodes and gathers them for display after further computations" do
+  it "allgatherv" do
+    (proc{|rank,size|
+      7.times.map{|i|
+        sbuf=[32]
+        rbuf=[0,0]
+        root=[3,4]
+        comm=[0,1,2]
 
-      fresh(
-        proc{
-          7.times.map{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            val=[0]
-            gr2=[1,2,3]
-            ch2=[0,0]
-            ms2=[0,0,0]
-            mpi_gather ch2 , ms2 , gr2
-            val[0] = ms2[0]*coef[7] + ms2[1]*coef[8] + ms2[2]*coef[9]
-            val
-          }
-        },
-        proc{
-          7.times{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            gr1=[4,5]
-            ch1=[0,0]
-            ms1=[0,0]
-            gr2=[0]
-            ms2=[0,10]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]*coef[1]+ms1[1]*coef[2]
-            mpi_bcast ms2 , gr2
-          }
-        },
-        proc{
-          7.times{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            gr1=[4,5]
-            ch1=[0,0]
-            ms1=[0,0]
-            gr2=[0]
-            ms2=[1,11]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]*coef[3]+ms1[1]*coef[4]
-            mpi_bcast ms2 , gr2
-          }
-        },
-        proc{
-          7.times{|i|
-            coef=[1,2,1,2,1,2,3,2,3,2]
-            gr1=[4,5]
-            ch1=[0,0]
-            ms1=[0,0]
-            gr2=[0]
-            ms2=[2,12]
-            mpi_gather ch1 , ms1 , gr1
-            ms2[1]=ms1[0]*coef[5]+ms1[1]*coef[6]
-            mpi_bcast ms2 , gr2
-          }
-        },
-        proc{
-          7.times{|i|
-            val=[4,2,3,8,4,6,1]
-            gr1=[1,2,3]
-            ms1=[0,32]
-            ms1[1]=val[i]
-            mpi_bcast ms1 , gr1
-          }
-        },
-        proc{
-          7.times{|i|
-            val=[2,4,8,16,32,64,48]
-            gr1=[1,2,3]
-            ms1=[1,32]
-            ms1[1]=val[i]
-            mpi_bcast ms1 , gr1
-          }
-        }
-      
-      ).first.should == [[78], [72], [130], [288], [408], [788], [542]] 
+        val1=[4,2,3,8,4,6,1]
+        val2=[2,4,8,16,32,64,48]
+        sbuf[0]=val1[i] if rank == 3
+        sbuf[0]=val2[i] if rank == 4
+        mpi_allgatherv sbuf , rbuf , root , comm , rank
+        rbuf
+      }
+    }*5)[0..2].should == [
+      [[4, 2], [2, 4], [3, 8], [8, 16], [4, 32], [6, 64], [1, 48]], 
+      [[4, 2], [2, 4], [3, 8], [8, 16], [4, 32], [6, 64], [1, 48]], 
+      [[4, 2], [2, 4], [3, 8], [8, 16], [4, 32], [6, 64], [1, 48]]
+    ] 
+  end
+
+  it "first allgatherv then processign with gatherv" do
+    (proc{ |rank,size|
+      7.times.map{|i|
+        coef=[1,2,1,2,1,2,3,2,3,2]
+        val0=[0]
+        val1=[4,2,3,8,4,6,1]
+        val2=[2,4,8,16,32,64,48]
+
+        sbuf1=[0]
+        rbuf1=[0,0]
+        root1=[4,5]
+        comm1=[1,2,3]
+
+        sbuf1[0]=val1[i] if rank==4
+        sbuf1[0]=val2[i] if rank==5
+        mpi_allgatherv sbuf1 , rbuf1 , root1 , comm1 , rank
+
+        sbuf2=[0]
+        rbuf2=[0,0,0]
+        root2=0
+        comm2=[1,2,3]
+
+        sbuf2[0]=rbuf1[0]*coef[2*rank-1]+rbuf1[1]*coef[2*rank] if comm2.include? rank
+        mpi_gatherv sbuf2 , rbuf2 , root2 , comm2 , rank
+
+        val0[0] = rbuf2[0]*coef[7] + rbuf2[1]*coef[8] + rbuf2[2]*coef[9]
+        val0
+      }
+    }*6).first.should == [[78], [72], [130], [288], [408], [788], [542]]
 
   end
 
 end
- 
+
