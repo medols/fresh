@@ -76,7 +76,7 @@ def fresh *m
 	$return
 end
 
-def mpi_gather_tx sbuf , rbuf , root , comm , rr
+def mpi_gather_tx sbuf , _rbuf , root , comm , rr
   rcomm=[root]
   rk=comm.find_index(rr)
   tbuf=[rk].concat sbuf

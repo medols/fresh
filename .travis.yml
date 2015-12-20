@@ -2,7 +2,8 @@ language: ruby
 rvm:
 - rbx-2.6
 install:
-- gem install rubinius-actor -V
+- gem install codeclimate-test-reporter
+- gem install rubinius-actor
 - git clone https://github.com/ruby/mspec.git ../mspec
 script:
 - "../mspec/bin/mspec"
