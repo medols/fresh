@@ -28,7 +28,21 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
 ### Docker container
 
+1. **[Install docker](https://docs.docker.com/installation/)**.
+
     https://hub.docker.com/r/fresh/fresh
+
+2. **Run an instance of the container**.
+
+    ```shell
+      docker run -it fresh/fresh
+    ```
+
+3. **Run your application**.
+
+    ```shell
+       echo "proc{|rk,sz| puts sleep 1+rk }*2" | docker run -i fresh/fresh
+    ```
 
 ### Credits
 
