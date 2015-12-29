@@ -35,7 +35,8 @@ def mpi_init rank, size
 	$node ||= size.times.map{false}
 	symid = ("n"+rank.to_s).to_sym
 	$node[rank] = Rubinius::Actor[symid] = Rubinius::Actor.current
-	sleep 0.1 until $node.all? 
+	sleep 0.05 until $node.all? 
+	sleep 0.05
 end
 
 def mpi_end rank, _size
