@@ -90,6 +90,7 @@ end
 def mpi_gatherv sbuf , rbuf , root , comm , rr
   mpi_gather_rx sbuf , rbuf , root , comm , rr  if rr==root
   mpi_gather_tx sbuf , rbuf , root , comm , rr  if comm.include? rr
+  rbuf
 end
 
 def mpi_bcast_tx sbuf , _rbuf , _root , comm , _rr
@@ -104,6 +105,7 @@ end
 def mpi_bcastv sbuf , rbuf , root , comm , rr
   mpi_bcast_tx sbuf , rbuf , root , comm , rr  if rr==root
   mpi_bcast_rx sbuf , rbuf , root , comm , rr  if comm.include? rr
+  rbuf
 end
 
 def mpi_allgather_tx sbuf , _rbuf , root , comm , rr
@@ -119,6 +121,7 @@ end
 def mpi_allgatherv sbuf , rbuf , root , comm , rr
   mpi_allgather_tx sbuf , rbuf , root , comm , rr  if root.include? rr
   mpi_allgather_rx sbuf , rbuf , root , comm , rr  if comm.include? rr
+  rbuf
 end
 
 def proc_mult pr_size , pr_one
