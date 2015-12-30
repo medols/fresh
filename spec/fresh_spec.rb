@@ -11,7 +11,13 @@ describe "proc mpi api" do
   it "mpi_gatherv" do
     (proc{ |rank,size|
       mpi_gatherv [rank+9] , [0,0,0] , 0 , [1,2,3] , rank
-    }*4).should==[[10,11,12],[0,0,0],[0,0,0],[0,0,0]]
+    }*4).should==[[10,11,12], [0,0,0], [0,0,0], [0,0,0]]
+  end
+
+  it "mpi_scatterv" do
+    (proc{ |rank,size|
+      mpi_scatterv [1,2,3] , [0] , 0 , [1,2,3] , rank
+    }*4).should==[[0], [1], [2], [3]]
   end
 
   it "mpi_bcastv then mpi_gatherv" do
