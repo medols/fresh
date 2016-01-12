@@ -2,29 +2,81 @@ require File.expand_path('../spec_helper', __FILE__)
 
 describe "proc mpi api" do
 
+  it "mpi_init 2" do
+    ( proc{ 2 }*2 ).should == [2,2]
+  end
+
+  it "mpi_init 4" do
+    ( proc{ 4 }*4 ).should == [4,4,4,4]
+  end
+
+  it "mpi_init 100" do
+    ( proc{ 100 }*100 ).should == [100]*100
+  end
+
+  it "mpi_rank 2" do
+    ( proc{ |rank,size| rank }*2 ).should == [0,1]
+  end
+
+  it "mpi_rank 4" do
+    ( proc{ |rank,size| rank }*4 ).should == [0,1,2,3]
+  end
+
+  it "mpi_rank 100" do
+    ( proc{ |rank,size| rank }*100 ).should == 100.times.to_a
+  end
+
+  it "mpi_size 2" do
+    ( proc{ |rank,size| size }*2 ).should == [2,2]
+  end
+
+  it "mpi_size 4" do
+    ( proc{ |rank,size| size }*4 ).should == [4,4,4,4]
+  end
+
+  it "mpi_size 100" do
+    ( proc{ |rank,size| size }*100 ).should == [100]*100
+  end
+
   it "mpi_bcastv" do
-    (proc{ |rank,size|
-      mpi_bcastv [32] , [0] , 0 , [1,2,3] , rank
-    }*4).should == [[0], [32], [32], [32]]
+    ( 
+
+      proc{ |rank,size|
+        mpi_bcastv [32] , [0] , 0 , [1,2,3] , rank
+      }*4 
+
+    ).should == [[0], [32], [32], [32]]
   end
 
   it "mpi_gatherv" do
-    (proc{ |rank,size|
+
+    [[10,11,12], [0,0,0], [0,0,0], [0,0,0]].should ==
+
+    proc{ |rank,size|
       mpi_gatherv [rank+9] , [0,0,0] , 0 , [1,2,3] , rank
-    }*4).should==[[10,11,12], [0,0,0], [0,0,0], [0,0,0]]
+    }*4
+
   end
 
   it "mpi_scatterv" do
-    (proc{ |rank,size|
-      mpi_scatterv [1,2,3] , [0] , 0 , [1,2,3] , rank
-    }*4).should==[[0], [1], [2], [3]]
+
+    [[0], [3], [2], [1]].should ==
+
+    proc{ |rank,size|
+      mpi_scatterv [3,2,1] , [0] , 0 , [1,2,3] , rank
+    }*4
+
   end
 
   it "mpi_bcastv then mpi_gatherv" do
-    (proc{ |rank,size|
+
+    [[32,32,32], [0,0,0], [0,0,0], [0,0,0], [0,0,0]].should ==
+
+    proc{ |rank,size|
       val=mpi_bcastv [32] , [0] , 4 , [1,2,3] , rank
       mpi_gatherv val , [0,0,0] , 0 , [1,2,3] , rank 
-    }*5).should == [[32,32,32], [0,0,0], [0,0,0], [0,0,0], [0,0,0]]
+    }*5
+
   end
 
   it "loop bcastv then gatherv" do
@@ -50,8 +102,7 @@ describe "proc mpi api" do
 
   it "allgatherv" do
     (proc{ |rank,size|
-      val=[[ 0, 0, 0, 0, 0, 0, 0], [ 0, 0, 0, 0, 0, 0, 0], [ 0, 0, 0, 0, 0, 0, 0],
-           [ 4, 2, 3, 8, 4, 6, 1], [ 2, 4, 8,16,32,64,48]]
+      val=[[], [], [], [ 4, 2, 3, 8, 4, 6, 1], [ 2, 4, 8,16,32,64,48]]
       7.times.map{|i|
         mpi_allgatherv [val[rank][i]] , [0,0] , [3,4] , [0,1,2] , rank
       }
@@ -64,9 +115,7 @@ describe "proc mpi api" do
 
   it "first allgatherv then processign with gatherv" do
     (proc{ |rank,size|
-      val=[[ 0, 0, 0, 0, 0, 0, 0], [ 0, 0, 0, 0, 0, 0, 0],
-           [ 0, 0, 0, 0, 0, 0, 0], [ 0, 0, 0, 0, 0, 0, 0],
-           [ 4, 2, 3, 8, 4, 6, 1], [ 2, 4, 8,16,32,64,48]]
+      val=[[], [], [], [], [ 4, 2, 3, 8, 4, 6, 1], [ 2, 4, 8,16,32,64,48]]
       coef=[1,2,1,2,1,2,3,2,3,2,0,0]
 
       7.times.map{|i|

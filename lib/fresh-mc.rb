@@ -1,4 +1,4 @@
-# fresh.rb - Fresh gem for multi-core processing. 
+# fresh-mc.rb - Fresh gem for multi-core processing. 
 #
 # Copyright 2015  Jaume Masip-Torne <jmasip@gianduia.net>
 #           2015  Ismael Merodio-Codinachs <ismael@gianduia.net>
@@ -32,15 +32,42 @@
 require "rubinius/actor"
 
 def mpi_init rank, size
-	$node ||= size.times.map{false}
 	symid = ("n"+rank.to_s).to_sym
 	$node[rank] = Rubinius::Actor[symid] = Rubinius::Actor.current
 	sleep 0.05 until $node.all? 
-	sleep 0.05
+	sleep 0.1
 end
 
-def mpi_end rank, _size
+def mpi_finalize rank, _size
 	$node[rank]=false
+end
+
+def proc_mult pr_size , pr_one
+	pa=[ proc{ |rk,sz| pr_one } ] * pr_size
+	pa.each_with_index.map{|f,rk| f.call(rk,pr_size)}
+end
+
+def fresh *m
+	main=m.flatten
+        msize=main.size
+	$node = [false]*msize
+	mpi_ret = [false]*msize
+	main.each_with_index{ |mpi_proc,index|
+        	Rubinius::Actor.spawn(index,msize){ |rank,size|
+        	        mpi_init rank, size
+        	        mpi_ret[rank]=mpi_proc.call rank, size
+			mpi_finalize rank, size
+        	}
+	}
+	sleep 0.05 until $node.none?
+	sleep 0.1
+	mpi_ret
+end
+
+class Proc
+  def * mult
+    fresh( proc_mult( mult , self ) )
+  end
 end
 
 def mpi_gather sbuf , rbuf, comm
@@ -53,28 +80,10 @@ def mpi_gather sbuf , rbuf, comm
 end
 
 def mpi_bcast buf , comm 
-        comm.each{ |s|
-                $node[s] << buf
-        }
+        comm.each{ |s| $node[s] << buf }
         comm.each{
                 Rubinius::Actor.receive{|f| f.when(:ack){|m| m} }
         }
-end
-
-def fresh *m
-	$stdout.sync = true
-	$main=m.flatten
-	$return=[]
-	$main.size.times{ |i|
-        	Rubinius::Actor.spawn(i){ |rank|
-			Rubinius::Actor.trap_exit = true
-        	        mpi_init rank, $main.size
-        	        $return[rank]=$main[rank].call rank, $main.size
-			mpi_end rank, $main.size
-        	}
-	}
-	sleep 0.1 until $node.none?
-	$return
 end
 
 def mpi_gather_tx sbuf , _rbuf , root , comm , rr
@@ -140,16 +149,5 @@ def mpi_allgatherv sbuf , rbuf , root , comm , rr
   mpi_allgather_tx sbuf , rbuf , root , comm , rr  if root.include? rr
   mpi_allgather_rx sbuf , rbuf , root , comm , rr  if comm.include? rr
   rbuf
-end
-
-def proc_mult pr_size , pr_one
-  pa=[ proc{ |rk,sz| pr_one } ] * pr_size
-  pa.each_with_index.map{|f,rk| f.call(rk,pr_size)}
-end
-
-class Proc
-  def * mult
-    fresh( proc_mult( mult , self ) )
-  end
 end
 

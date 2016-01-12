@@ -1,4 +1,4 @@
-FROM concourse/rubinius:latest
+FROM rubinius/rubinius:latest
 
 RUN gem install fresh-mc -V
 
