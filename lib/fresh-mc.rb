@@ -103,6 +103,13 @@ def mpi_gatherv sbuf , rbuf , root , comm , rr
   rbuf
 end
 
+#def mpi_sendrecv sbuf , rbuf , root , comm , rr
+#  scomm=[comm]
+#  mpi_gather_rx sbuf , rbuf , root , scomm , rr  if rr==root
+#  mpi_gather_tx sbuf , rbuf , root , scomm , rr  if rr==comm
+#  rbuf
+#end
+
 def mpi_bcast_tx sbuf , _rbuf , _root , comm , _rr
   tbuf=[0].concat sbuf
   mpi_bcast tbuf , comm

@@ -2,42 +2,6 @@ require File.expand_path('../spec_helper', __FILE__)
 
 describe "proc mpi api" do
 
-  it "mpi_init 2" do
-    ( proc{ 2 }*2 ).should == [2,2]
-  end
-
-  it "mpi_init 4" do
-    ( proc{ 4 }*4 ).should == [4,4,4,4]
-  end
-
-  it "mpi_init 100" do
-    ( proc{ 100 }*100 ).should == [100]*100
-  end
-
-  it "mpi_rank 2" do
-    ( proc{ |rank,size| rank }*2 ).should == [0,1]
-  end
-
-  it "mpi_rank 4" do
-    ( proc{ |rank,size| rank }*4 ).should == [0,1,2,3]
-  end
-
-  it "mpi_rank 100" do
-    ( proc{ |rank,size| rank }*100 ).should == 100.times.to_a
-  end
-
-  it "mpi_size 2" do
-    ( proc{ |rank,size| size }*2 ).should == [2,2]
-  end
-
-  it "mpi_size 4" do
-    ( proc{ |rank,size| size }*4 ).should == [4,4,4,4]
-  end
-
-  it "mpi_size 100" do
-    ( proc{ |rank,size| size }*100 ).should == [100]*100
-  end
-
   it "mpi_bcastv" do
     ( 
 

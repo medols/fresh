@@ -1,4 +1,4 @@
-FROM rubinius/rubinius:latest
+FROM rubinius/docker:latest
 
 RUN gem install fresh-mc -V
 
