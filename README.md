@@ -1,12 +1,6 @@
 # Fresh
 
-[![Build Status](https://travis-ci.org/medols/fresh.svg)](https://travis-ci.org/medols/fresh)
-
-[![Code Climate](https://codeclimate.com/github/medols/fresh/badges/gpa.svg)](https://codeclimate.com/github/medols/fresh)
-
-[![Test Coverage](https://codeclimate.com/github/medols/fresh/badges/coverage.svg)](https://codeclimate.com/github/medols/fresh/coverage)
-
-[![Issue Count](https://codeclimate.com/github/medols/fresh/badges/issue_count.svg)](https://codeclimate.com/github/medols/fresh)
+[![Build Status](https://travis-ci.org/medols/fresh.svg)](https://travis-ci.org/medols/fresh) [![Code Climate](https://codeclimate.com/github/medols/fresh/badges/gpa.svg)](https://codeclimate.com/github/medols/fresh) [![Test Coverage](https://codeclimate.com/github/medols/fresh/badges/coverage.svg)](https://codeclimate.com/github/medols/fresh/coverage) [![Issue Count](https://codeclimate.com/github/medols/fresh/badges/issue_count.svg)](https://codeclimate.com/github/medols/fresh)
 
 Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
@@ -21,7 +15,7 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
     proc{|rank,size|
       3.times{|i|
         sleep rank
-        puts "Hi #{i+1} from node #{rank+1}/#{size}"
+        puts "Hi #{i} from node #{rank}/#{size}"
         sleep 3-rank
       }
     }*3
