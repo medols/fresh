@@ -6,6 +6,7 @@ describe "mpi_scatterv" do
             mpi_scatterv [3,2,1] , [0] , 0 , [1,2,3] , rank
           }*4
 
+    res.size.should == 4
     res.should == [[0], [3], [2], [1]]
 
   end
@@ -16,6 +17,7 @@ describe "mpi_scatterv" do
             mpi_scatterv [7,6,5,4,3,2,1], [0] , 0 , [1,2,3,4,5,6,7] , rank
           }*8
 
+    res.size.should == 8
     res.first.should == [0] 
     res[1..-1].should == [ [7], [6], [5], [4], [3], [2], [1]]
 
@@ -27,6 +29,7 @@ describe "mpi_scatterv" do
             mpi_scatterv (1..99).to_a.reverse, [0] , 0 , (1..99) , rank
           }*100
 
+    res.size.should == 100 
     res.first.should == [0] 
     res[1..-1].should == (1..99).to_a.reverse.map{|i|[i]}
 

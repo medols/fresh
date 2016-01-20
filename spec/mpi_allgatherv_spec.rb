@@ -1,42 +1,62 @@
 describe "mpi_allgatherv" do
 
-  it "allgatherv 5" do
+  it "allgatherv 4" do
 
     res = proc{ |rank,size|
-            val=[[], [], [], [ 4, 2, 3, 8, 4, 6, 1], [ 2, 4, 8,16,32,64,48]]
+            val=[[], [], (1..7).to_a, (11..17).to_a]
             7.times.map{|i|
-              mpi_allgatherv [val[rank][i]] , [0,0] , [3,4] , [0,1,2] , rank
+              mpi_allgatherv [val[rank][i]] , [0,0] , [2,3] , [0,1] , rank
             }
-          }*5
+          }*4
 
-    res[0].should == [[4, 2], [2, 4], [3, 8], [8, 16], [4, 32], [6, 64], [1, 48]]
-    res[1].should == [[4, 2], [2, 4], [3, 8], [8, 16], [4, 32], [6, 64], [1, 48]]
-    res[2].should == [[4, 2], [2, 4], [3, 8], [8, 16], [4, 32], [6, 64], [1, 48]]
-    res[3].should == [[0, 0], [0, 0], [0, 0], [0,  0], [0,  0], [0,  0], [0,  0]]
-    res[4].should == [[0, 0], [0, 0], [0, 0], [0,  0], [0,  0], [0,  0], [0,  0]]
+    res.size.should == 4
+    res[0].should == [[1, 11], [2, 12], [3, 13], [4, 14], [5, 15], [6, 16], [7, 17]]
+    res[1].should == res[0]
+    res[2].should == [[0, 0], [0, 0], [0, 0], [0,  0], [0,  0], [0,  0], [0,  0]]
+    res[3].should == res[2] 
 
   end
 
-#  it "mpi_gatherv 8" do
-#
-#    res = proc{ |rank,size|
-#            mpi_gatherv [rank+9] , [0,0,0,0,0,0,0] , 0 , [1,2,3,4,5,6,7] , rank
-#          }*8
-#
-#    res.first.should == (10..16).to_a
-#    res[1..-1].should == [ [0]*7 ]*7
-#
-#  end
+  it "allgatherv 8" do
 
-#  it "mpi_gatherv 100" do
-#
-#    res = proc{ |rank,size|
-#            mpi_gatherv [rank+9] , [0]*99 , 0 , (1..99).to_a , rank
-#          }*100
-#
-#    res.first.should == (10..108).to_a
-#    res[1..-1].should == [ [0]*99 ]*99
-#
-#  end
+    res = proc{ |rank,size|
+            val=[[],[],[], [], (1..7).to_a, (11..17).to_a, (21..27).to_a, (31..37).to_a]
+            7.times.map{|i|
+              mpi_allgatherv [val[rank][i]] , [0]*4 , 4..7 , 0..3 , rank
+            }
+          }*8
+
+    res.size.should == 8
+    res[0].should == [[1, 11, 21, 31],
+                      [2, 12, 22, 32],
+                      [3, 13, 23, 33],
+                      [4, 14, 24, 34],
+                      [5, 15, 25, 35],
+                      [6, 16, 26, 36],
+                      [7, 17, 27, 37]]
+    res[1].should == res[0]
+    res[2].should == res[0]
+    res[3].should == res[0]
+    res[4].should == [[0, 0, 0, 0]]*7
+    res[5].should == res[4] 
+    res[6].should == res[4] 
+    res[7].should == res[4] 
+
+  end
+
+  it "allgatherv 100" do
+
+    res = proc{ |rank,size|
+            val=([[]]*50).concat 50.times.map{|i| ((1+(10*i))..(7+(10*i))).to_a}
+            7.times.map{|i|
+              mpi_allgatherv [val[rank][i]] , [0]*50 , 50..99 , 0..49 , rank
+            }
+          }*100
+
+    res.size.should == 100
+    res[0..49].each{|r| r.should == (1..7).map{|i| (i..(i+10*(50-1))).step(10).to_a} }
+    res[50..99].each{|r| r.should == [[0]*50]*7 }
+
+  end
 
 end

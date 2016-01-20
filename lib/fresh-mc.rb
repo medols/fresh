@@ -104,6 +104,8 @@ def mpi_gatherv sbuf , rbuf , root , comm , rr
 end
 
 def mpi_sendrecv sbuf , rbuf , root , comm , rr
+  root=root.to_a
+  comm=comm.to_a
   mpi_gather_rx sbuf , rbuf , root , [ comm[root.find_index(rr)] ] , rr  if root.include? rr
   mpi_gather_tx sbuf , rbuf , root[ comm.find_index(rr) ] , [ rr ] , rr  if comm.include? rr
   rbuf
