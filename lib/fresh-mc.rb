@@ -44,7 +44,7 @@ end
 
 def proc_mult pr_size , pr_one
 	pa=[ proc{ |rk,sz| pr_one } ] * pr_size
-	pa.each_with_index.map{|f,rk| f.call(rk,pr_size)}
+	pa.each_with_index.map{ |f,rk| f[rk,pr_size] }
 end
 
 def fresh *m
