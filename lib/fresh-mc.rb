@@ -159,3 +159,20 @@ def mpi_allgatherv sbuf , rbuf , root , comm , rr
   rbuf
 end
 
+def mpi_alltoall_tx sbuf , _rbuf , root , comm , rr
+  sbuf.each_slice(sbuf.size/comm.size).zip(comm) do |sb,cm|
+    rnod=root.find_index(rr)
+    tbuf=[rnod].concat sb
+    mpi_bcast tbuf , [cm]
+  end
+end
+
+def mpi_alltoall_rx sbuf , rbuf , root , _comm , _rr
+  mpi_gather sbuf , rbuf , root
+end
+
+def mpi_alltoallv sbuf , rbuf , root , comm , rr
+  mpi_alltoall_tx sbuf , rbuf , root , comm , rr  if root.include? rr
+  mpi_alltoall_rx sbuf , rbuf , root , comm , rr  if comm.include? rr
+  rbuf
+end
