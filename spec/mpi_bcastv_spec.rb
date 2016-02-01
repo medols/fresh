@@ -10,6 +10,16 @@ describe "mpi_bcastv" do
 
   end
 
+  it "mpi_bcastv 4 with tx/rx intersection" do
+
+    res = proc{ |rank,size|
+            mpi_bcastv [32] , [0] , 0 , [0,1,2,3] , rank
+          }*4
+
+    res.should == [ [32] , [32] , [32] , [32] ]
+
+  end
+
   it "mpi_bcastv 8" do
 
     res = proc{ |rank,size|
@@ -22,6 +32,16 @@ describe "mpi_bcastv" do
 
   end
 
+  it "mpi_bcastv 8 with tx/rx intersection" do
+
+    res = proc{ |rank,size|
+            mpi_bcastv [64] , [0] , 0 , [0,1,2,3,4,5,6,7] , rank
+          }*8
+
+    res.should == [ [64] ] * 8
+
+  end
+
   it "mpi_bcastv 100" do
 
     res = proc{ |rank,size|
@@ -31,6 +51,16 @@ describe "mpi_bcastv" do
     res.size.should == 100 
     res.first.should == [0]
     res[1..-1].should == [ [128] ] * 99
+
+  end
+
+  it "mpi_bcastv 100 with tx/rx intersection" do
+
+    res = proc{ |rank,size|
+            mpi_bcastv [128] , [0] , 0 , 100.times , rank
+          }*100
+
+    res.should == [ [128] ] * 100
 
   end
 

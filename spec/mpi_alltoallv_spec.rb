@@ -1,4 +1,4 @@
-describe "mpi_scatterv" do
+describe "mpi_alltoallv" do
 
   it "mpi_alltoallv 4" do
 
@@ -11,7 +11,7 @@ describe "mpi_scatterv" do
 
   end
 
-  it "mpi_alltoall 8" do
+  it "mpi_alltoallv 8" do
 
     res = proc{ |rank,size|
             mpi_alltoallv [7,6,5,4], [0,0,0,0] , [0,1,2,3] , [4,5,6,7] , rank
@@ -23,16 +23,16 @@ describe "mpi_scatterv" do
 
   end
 
-#  it "mpi_alltoall 100" do
-#
-#    res = proc{ |rank,size|
-#            mpi_alltoallv (1..99).to_a.reverse, [0] , 0 , (1..99) , rank
-#          }*100
-#
-#    res.size.should == 100 
-#    res.first.should == [0] 
-#    res[1..-1].should == (1..99).to_a.reverse.map{|i|[i]}
-#
-#  end
+  it "mpi_alltoallv 100" do
+
+    res = proc{ |rank,size|
+            mpi_alltoallv (50..99).to_a.reverse, [0]*50 , 0..49 , 50..99 , rank
+          }*100
+
+    res.size.should == 100 
+    res[0..49].should == [[0]*50]*50
+    res[50..-1].should == (50..99).to_a.reverse.map{|i|[i]*50}
+
+  end
 
 end

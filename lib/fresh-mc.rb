@@ -113,16 +113,18 @@ end
 
 def mpi_bcast_tx sbuf , _rbuf , _root , comm , _rr
   tbuf=[0].concat sbuf
-  mpi_bcast tbuf , comm
+  mpi_bcast tbuf , comm 
 end
 
-def mpi_bcast_rx sbuf , rbuf , root , _comm , _rr
+def mpi_bcast_rx sbuf , rbuf , root , _comm , rr
   mpi_gather sbuf , rbuf , [ root ]
 end
 
 def mpi_bcastv sbuf , rbuf , root , comm , rr
-  mpi_bcast_tx sbuf , rbuf , root , comm , rr  if rr==root
-  mpi_bcast_rx sbuf , rbuf , root , comm , rr  if comm.include? rr
+  commderoot=comm.to_a-[root]
+  mpi_bcast_tx sbuf , rbuf , root , commderoot , rr  if root==rr
+  mpi_bcast_rx sbuf , rbuf , root , commderoot , rr  if commderoot.include? rr
+  rbuf=sbuf if (comm.to_a & [root]).include?(rr)
   rbuf
 end
 
