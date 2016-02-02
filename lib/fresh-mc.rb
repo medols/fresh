@@ -98,9 +98,12 @@ def mpi_gather_rx sbuf , rbuf , _root , comm , _rr
 end
 
 def mpi_gatherv sbuf , rbuf , root , comm , rr
-  mpi_gather_rx sbuf , rbuf , root , comm , rr  if rr==root
-  mpi_gather_tx sbuf , rbuf , root , comm , rr  if comm.include? rr
-  rbuf
+  rk=comm.find_index(rr)
+  commderoot=comm.to_a-[root]
+  mpi_gather_tx sbuf , rbuf , root , comm , rr  if commderoot.include? rr
+  mpi_gather_rx sbuf , rbuf , root , commderoot , rr  if root==rr
+  rbuf[rk..(rk+sbuf.size-1)]=sbuf if (comm.to_a & [root]).include?(rr)
+  rbuf.flatten
 end
 
 def mpi_sendrecv sbuf , rbuf , root , comm , rr
