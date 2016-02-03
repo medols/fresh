@@ -12,7 +12,7 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
     require 'fresh-mc'
 
-    proc{|rank,size|
+    proc{
       3.times{|i|
         sleep rank
         puts "Hi #{i} from node #{rank}/#{size}"
@@ -35,7 +35,7 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 3. **Run your application**.
 
     ```shell
-       echo "proc{|r,s| p sleep r }*4" | docker run -i fresh/fresh
+       echo "proc{ p sleep rank }*4" | docker run -i fresh/fresh
     ```
 
 ### Credits

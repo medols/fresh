@@ -4,7 +4,7 @@ describe "mpi_sendrecv" do
 
   it "mpi_sendrecv 2" do
 
-    res = proc{ |rank,size| 
+    res = proc{ 
             mpi_sendrecv [rank+9] , [0] , [0] , [1] , rank 
           }*2 
 
@@ -13,9 +13,17 @@ describe "mpi_sendrecv" do
 
   end
 
+  it "sendrecv 2" do
+
+    res = proc{ sendrecv [rank+9] , [0] , [0] , [1] }*2 
+    res.size.should == 2
+    res.should == [[10],[0]]
+
+  end
+
   it "mpi_sendrecv 4" do
 
-    res = proc{ |rank,size| 
+    res = proc{ 
             mpi_sendrecv [rank+9] , [0] , [0,2] , [1,3] , rank 
           }*4 
 
@@ -26,7 +34,7 @@ describe "mpi_sendrecv" do
 
   it "mpi_sendrecv 100" do
 
-    res = proc{ |rank,size| 
+    res = proc{ 
             mpi_sendrecv [rank+9] , [0] , (0..98).step(2) , (1..99).step(2) , rank 
           }*100 
 

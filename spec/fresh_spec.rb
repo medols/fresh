@@ -6,7 +6,7 @@ describe "proc mpi api" do
 
     [[32,32,32], [0,0,0], [0,0,0], [0,0,0], [0,0,0]].should ==
 
-    proc{ |rank,size|
+    proc{
       val=mpi_bcastv [32] , [0] , 4 , [1,2,3] , rank
       mpi_gatherv val , [0,0,0] , 0 , [1,2,3] , rank 
     }*5
@@ -14,7 +14,7 @@ describe "proc mpi api" do
   end
 
   it "bcastv then gatherv inside loop" do
-    (proc{ |rank,size|
+    (proc{
       7.times.map{|i|
         buf= mpi_bcastv [i] , [0] , 4 , [1,2,3] , rank
         mpi_gatherv buf , [0,0,0] , 0 , [1,2,3] , rank
@@ -23,7 +23,7 @@ describe "proc mpi api" do
   end
 
   it "bcastv then signal processing then gatherv" do
-    (proc{ |rank,size|
+    (proc{
       val=[4,2,3,8,4,6,1]
       coef=[1,2,1,2,1,2,3,2,3,2,0,0]
       7.times.map{|i|
@@ -35,7 +35,7 @@ describe "proc mpi api" do
   end
 
   it "allgatherv then processign then gatherv" do
-    (proc{ |rank,size|
+    (proc{
       val=[[], [], [], [], [ 4, 2, 3, 8, 4, 6, 1], [ 2, 4, 8,16,32,64,48]]
       coef=[1,2,1,2,1,2,3,2,3,2,0,0]
 

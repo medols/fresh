@@ -2,7 +2,7 @@ describe "mpi_gatherv" do
 
   it "mpi_gatherv 4" do
 
-    res = proc{ |rank,size|
+    res = proc{
             mpi_gatherv [rank+9] , [0,0,0] , 0 , [1,2,3] , rank
           }*4
 
@@ -11,9 +11,17 @@ describe "mpi_gatherv" do
 
   end
 
+  it "mpi_gatherv 4 2" do
+
+    res = proc{ gather [rank+9] , [0,0,0] , 0 , [1,2,3] }*4
+    res.size.should == 4
+    res.should == [[10,11,12], [0,0,0], [0,0,0], [0,0,0]]
+
+  end
+
   it "mpi_gatherv 4 with tx/rx intersection" do
 
-    res = proc{ |rank,size|
+    res = proc{
             mpi_gatherv [rank+9] , [0,0,0,0] , 0 , [0,1,2,3] , rank
           }*4
 
@@ -24,7 +32,7 @@ describe "mpi_gatherv" do
 
   it "mpi_gatherv 8" do
 
-    res = proc{ |rank,size|
+    res = proc{
             mpi_gatherv [rank+9] , [0,0,0,0,0,0,0] , 0 , [1,2,3,4,5,6,7] , rank
           }*8
 
@@ -36,7 +44,7 @@ describe "mpi_gatherv" do
 
   it "mpi_gatherv 8 with tx/rx intersection" do
 
-    res = proc{ |rank,size|
+    res = proc{
             mpi_gatherv [rank+9] , [0,0,0,0,0,0,0,0] , 0 , [0,1,2,3,4,5,6,7] , rank
           }*8
 
@@ -48,7 +56,7 @@ describe "mpi_gatherv" do
 
   it "mpi_gatherv 100" do
 
-    res = proc{ |rank,size|
+    res = proc{
             mpi_gatherv [rank+9] , [0]*99 , 0 , 1..99 , rank
           }*100
 
@@ -60,7 +68,7 @@ describe "mpi_gatherv" do
 
   it "mpi_gatherv 100 with tx/rx intersection" do
 
-    res = proc{ |rank,size|
+    res = proc{
             mpi_gatherv [rank+9] , [0]*100 , 0 , 0..99 , rank
           }*100
 
