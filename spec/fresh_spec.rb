@@ -2,6 +2,10 @@ require File.expand_path('../spec_helper', __FILE__)
 
 describe "proc mpi api" do
 
+  it "multiple node exception" do
+    lambda { proc{ raise }*4 }.should raise_error(MultiNodeError)
+  end
+
   it "mpi_bcastv then mpi_gatherv" do
 
     [[32,32,32], [0,0,0], [0,0,0], [0,0,0], [0,0,0]].should ==

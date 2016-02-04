@@ -29,8 +29,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#require "fresh-visor"
-
 class Proc
   def * mult
     Fresh.start mult , self 
@@ -38,19 +36,19 @@ class Proc
 end
 
 def mpi_gather sbuf , rbuf, comm
-        comm.each{
-                sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
-                rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
-        }
-        comm.each{ |s| Fresh[s] << :ack }
-        rbuf=rbuf.flatten
+  comm.each{
+    sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
+    rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
+  }
+  comm.each{ |s| Fresh[s] << :ack }
+  rbuf=rbuf.flatten
 end
 
 def mpi_bcast buf , comm 
-        comm.each{ |s| Fresh[s] << buf }
-        comm.each{
-                Rubinius::Actor.receive{|f| f.when(:ack){|m| m} }
-        }
+  comm.each{ |s| Fresh[s] << buf }
+  comm.each{
+    Rubinius::Actor.receive{|f| f.when(:ack){|m| m} }
+  }
 end
 
 def mpi_gather_tx sbuf , _rbuf , root , comm , rr
@@ -86,7 +84,7 @@ def mpi_bcast_tx sbuf , _rbuf , _root , comm , _rr
   mpi_bcast tbuf , comm 
 end
 
-def mpi_bcast_rx sbuf , rbuf , root , _comm , rr
+def mpi_bcast_rx sbuf , rbuf , root , _comm , _rr
   mpi_gather sbuf , rbuf , [ root ]
 end
 
@@ -155,6 +153,7 @@ module Rubinius
   class Actor
     attr_accessor :rank
     attr_accessor :size
+
     def linked
       @links
     end
@@ -181,7 +180,17 @@ end
 
 class Proc
   def * mult
-    Fresh.start mult , self
+    Fresh.start self , mult
+  end
+end
+
+class MultiNodeError < RuntimeError
+  attr_reader :multi
+  attr_reader :reason
+  def initialize(multi, reason)
+    super(reason)
+    @multi = multi
+    @reason = reason
   end
 end
 
@@ -193,15 +202,9 @@ class Fresh
 
   class << self
 
-    def proc_mult pr_size , pr_one
-      pa=[ proc{ |rk,sz| pr_one } ] * pr_size
-      pa.each_with_index.map{ |f,rk| f[rk,pr_size] }
-    end
-
-    def start mult, mproc # main
-      main = proc_mult( mult , mproc ).flatten
-      init main.size
-      run main
+    def start mproc, mult 
+      init mult
+      mult.times{ visor << Work[mproc] }
       finalize
     end
 
@@ -217,61 +220,62 @@ class Fresh
       @@visor
     end
 
-    def init fsize
+    def exception i,e
+      @@exc[i]<<e
+    end
+ 
+    def init freshsize
 
-      @@ret = [nil]*fsize
-      @@visor = Rubinius::Actor.spawn(fsize) do |fsize|
+      @@ret = [nil]*freshsize
+      @@exc = Array.new(freshsize){[]}
+      @@visor = Rubinius::Actor.spawn(freshsize) do |fsize|
 
         Rubinius::Actor.trap_exit = true
-        ready_workers = []
+        supervisor = Rubinius::Actor.current
+
         work_end=false
         work_todo=[]
-
-        supervisor = Rubinius::Actor.current
+        ready_workers = []
 
         work_loop = proc do |rank,size|
           Rubinius::Actor.current.rank=rank
           Rubinius::Actor.current.size=size
           loop do
             work = Rubinius::Actor.receive
-            #p "> #{rank} #{Rubinius::Actor.current} #{work}"
             break if work.is_a? Stop
             sleep 0.1
-            Fresh[rank]=Rubinius::Actor.current.instance_exec &work.msg
+            Fresh[rank]=Rubinius::Actor.current.instance_exec( &work.msg )
             supervisor << Ready[Rubinius::Actor.current]
           end
-          #p "End #{rank}"
         end
 
-        fsize.times do # start 10 worker actors
-          #p "Begin #{Rubinius::Actor.current.linked.size}"
+        fsize.times do
           ready_workers << Rubinius::Actor.spawn_link(Rubinius::Actor.current.linked.size,fsize,&work_loop)
         end
 
         loop do
           Rubinius::Actor.receive do |f|
             f.when(Ready) do |who|
-              #p "= #{who}"
               who.this << work_todo.pop unless work_todo.empty?
               ready_workers << who.this if work_todo.empty? 
               ready_workers.each{ |rw| rw << Stop[:now] } if work_end and ready_workers.size==fsize
             end
             f.when(Work) do |work|
-              #p "= #{work}"
               if ready_workers.empty?
                 work_todo << work 
               else
                 ready_workers.pop << work 
               end
             end
-            f.when(Stop) do |stp|
-              #p "= #{stp}"
+            f.when(Stop) do
               work_end=true
             end
             f.when(Rubinius::Actor::DeadActorError) do |exit|
               unless exit.reason.nil?
-                print "Actor exited with message: #{exit.reason.inspect}\n"
-                ready_workers << Rubinius::Actor.spawn_link(Rubinius::Actor.current.linked.size,fsize,&work_loop)
+                node = exit.actor
+                exception node.rank, exit
+                warn "Node #{node.rank}/#{node.size} exit: #{exit.reason.inspect}\n"
+                #ready_workers << Rubinius::Actor.spawn_link(Rubinius::Actor.current.linked.size,fsize,&work_loop)
               end
             end
           end
@@ -279,18 +283,15 @@ class Fresh
 
       end
 
-      sleep 0.05 until visor.linked.size==fsize
+      sleep 0.05 until visor.linked.size==freshsize
       sleep 0.1
     end
 
     def finalize
       visor<<Stop[:now]
       sleep 0.05 until visor.linked.empty?
+      raise MultiNodeError.new(@@exc,"Fresh finished with #{@@exc.flatten.size} exceptions.") unless @@exc.flatten.empty?
       @@ret
-    end
-
-    def run runproc
-      runproc.each{|rp| visor << Work[rp] }
     end
 
   end
