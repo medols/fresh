@@ -175,6 +175,7 @@ module Rubinius
     def alltoall sbuf , rbuf , root , comm
       mpi_alltoallv sbuf , rbuf , root , comm , rank
     end
+
   end
 end
 
@@ -194,11 +195,11 @@ class MultiNodeError < RuntimeError
   end
 end
 
-class Fresh 
+Ready = Struct.new(:this)
+Work  = Struct.new(:msg)
+Stop  = Struct.new(:stp)
 
-  Ready = Struct.new(:this)
-  Work  = Struct.new(:msg)
-  Stop  = Struct.new(:stp)
+class Fresh 
 
   class << self
 
@@ -223,63 +224,70 @@ class Fresh
     def exception i,e
       @@exc[i]<<e
     end
- 
+
+    def nodes
+      @@nodes
+    end
+
+    def work_end
+      @@work_end
+    end
+
+    def set_end
+      @@work_end=true
+    end
+
+    def init_manager freshsize 
+      @@size= freshsize
+      @@nodes = []
+      @@ret = [nil]*@@size
+      @@exc = Array.new(@@size+1){[]}
+      @@work_end = false
+      @@work_loop = proc do |rank,size|
+        Rubinius::Actor.current.rank=rank
+        Rubinius::Actor.current.size=size
+        loop do
+          work = Rubinius::Actor.receive
+          break if work.is_a? Stop
+          sleep 0.1
+          Fresh[rank]=Rubinius::Actor.current.instance_exec( &work.msg )
+          Fresh.visor << Ready[Rubinius::Actor.current]
+        end
+      end
+    end
+
     def init freshsize
 
-      @@ret = [nil]*freshsize
-      @@exc = Array.new(freshsize){[]}
-      @@visor = Rubinius::Actor.spawn(freshsize) do |fsize|
+      init_manager freshsize
+      @@visor = Rubinius::Actor.spawn(@@size) do |fsize|
 
         Rubinius::Actor.trap_exit = true
-        supervisor = Rubinius::Actor.current
-
-        work_end=false
-        work_todo=[]
-        ready_workers = []
-
-        work_loop = proc do |rank,size|
-          Rubinius::Actor.current.rank=rank
-          Rubinius::Actor.current.size=size
-          loop do
-            work = Rubinius::Actor.receive
-            break if work.is_a? Stop
-            sleep 0.1
-            Fresh[rank]=Rubinius::Actor.current.instance_exec( &work.msg )
-            supervisor << Ready[Rubinius::Actor.current]
-          end
-        end
 
         fsize.times do
-          ready_workers << Rubinius::Actor.spawn_link(Rubinius::Actor.current.linked.size,fsize,&work_loop)
+          nodes << Rubinius::Actor.spawn_link(Rubinius::Actor.current.linked.size,fsize,&@@work_loop)
         end
 
-        loop do
-          Rubinius::Actor.receive do |f|
-            f.when(Ready) do |who|
-              who.this << work_todo.pop unless work_todo.empty?
-              ready_workers << who.this if work_todo.empty? 
-              ready_workers.each{ |rw| rw << Stop[:now] } if work_end and ready_workers.size==fsize
-            end
-            f.when(Work) do |work|
-              if ready_workers.empty?
-                work_todo << work 
-              else
-                ready_workers.pop << work 
-              end
-            end
-            f.when(Stop) do
-              work_end=true
-            end
-            f.when(Rubinius::Actor::DeadActorError) do |exit|
-              unless exit.reason.nil?
-                node = exit.actor
-                exception node.rank, exit
-                warn "Node #{node.rank}/#{node.size} exit: #{exit.reason.inspect}\n"
-                #ready_workers << Rubinius::Actor.spawn_link(Rubinius::Actor.current.linked.size,fsize,&work_loop)
-              end
+      loop do
+        Rubinius::Actor.receive do |f|
+          f.when(Ready) do |who|
+            nodes<<who.this
+            nodes.each{ |rw| rw << Stop[:now] } if work_end and nodes.size==fsize
+          end
+          f.when(Work) do |work|
+             nodes.pop << work unless nodes.empty? 
+          end
+          f.when(Stop) do
+            set_end
+          end
+          f.when(Rubinius::Actor::DeadActorError) do |exit|
+            unless exit.reason.nil?
+              node = exit.actor
+              warn "Node #{node.rank}/#{node.size} exit: #{exit.reason.inspect}"
+              exception node.rank, exit
             end
           end
         end
+     end
 
       end
 
