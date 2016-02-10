@@ -61,18 +61,20 @@ describe "mpi_allgatherv" do
 
   end
 
-  it "mpi_allgatherv 100" do
+  it "mpi_allgatherv 90" do
 
+    dim = 90
+    dim2= dim/2
     res = proc{
-            val=([[]]*50).concat 50.times.map{|i| ((1+(10*i))..(7+(10*i))).to_a}
+            val=([[]]*dim2).concat dim2.times.map{|i| ((1+(10*i))..(7+(10*i))).to_a}
             7.times.map{|i|
-              mpi_allgatherv [val[rank][i]] , [0]*50 , 50..99 , 0..49 , rank
+              mpi_allgatherv [val[rank][i]] , [0]*dim2 , dim2..(dim-1) , 0..(dim2-1) , rank
             }
-          }*100
+          }*dim
 
-    res.size.should == 100
-    res[0..49].each{|r| r.should == (1..7).map{|i| (i..(i+10*(50-1))).step(10).to_a} }
-    res[50..99].should == [[[0]*50]*7]*50 
+    res.size.should == dim
+    res[0..(dim2-1)].each{|r| r.should == (1..7).map{|i| (i..(i+10*(dim2-1))).step(10).to_a} }
+    res[dim2..(dim-1)].should == [[[0]*dim2]*7]*dim2
 
   end
 

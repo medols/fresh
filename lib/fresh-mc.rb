@@ -37,7 +37,7 @@ end
 
 def mpi_gather sbuf , rbuf, comm
   comm.each{
-    sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
+    sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }#.clone
     rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
   }
   comm.each{ |s| Fresh[s] << :ack }
@@ -199,7 +199,9 @@ Ready = Struct.new(:this)
 Work  = Struct.new(:msg)
 Stop  = Struct.new(:stp)
 
-class Fresh 
+class Fresh < Rubinius::Actor 
+
+  extend Rubinius
 
   class << self
 
@@ -244,50 +246,61 @@ class Fresh
       @@exc = Array.new(@@size+1){[]}
       @@work_end = false
       @@work_loop = proc do |rank,size|
-        Rubinius::Actor.current.rank=rank
-        Rubinius::Actor.current.size=size
+        current.rank=rank
+        current.size=size
         loop do
-          work = Rubinius::Actor.receive
+          work = receive#.clone
           break if work.is_a? Stop
           sleep 0.1
-          Fresh[rank]=Rubinius::Actor.current.instance_exec( &work.msg )
-          Fresh.visor << Ready[Rubinius::Actor.current]
+          Fresh[rank]=current.instance_exec( &work.msg )
+          Fresh.visor << Ready[current]
         end
       end
+    end
+
+    def filter
+      @@filter
+    end
+
+    def filter_ready who
+      nodes<<who.this
+      nodes.each{ |rw| rw << Stop[:now] } if work_end and nodes.size==fsize
     end
 
     def init freshsize
 
       init_manager freshsize
-      @@visor = Rubinius::Actor.spawn(@@size) do |fsize|
 
-        Rubinius::Actor.trap_exit = true
+      @@visor = spawn(@@size) do |fsize|
+
+        Actor.trap_exit = true
 
         fsize.times do
-          nodes << Rubinius::Actor.spawn_link(Rubinius::Actor.current.linked.size,fsize,&@@work_loop)
+          nodes<<spawn_link(current.linked.size,fsize,&@@work_loop)
         end
 
-      loop do
-        Rubinius::Actor.receive do |f|
-          f.when(Ready) do |who|
+        do_stop=proc{set_end}
+        do_ready=proc{ |who|
             nodes<<who.this
-            nodes.each{ |rw| rw << Stop[:now] } if work_end and nodes.size==fsize
-          end
-          f.when(Work) do |work|
-             nodes.pop << work unless nodes.empty? 
-          end
-          f.when(Stop) do
-            set_end
-          end
-          f.when(Rubinius::Actor::DeadActorError) do |exit|
+            nodes.each{ |rw| rw << Stop[:now] } if work_end and nodes.size==fsize }
+        do_work=proc{ |work| nodes.pop << work unless nodes.empty? }
+
+        @@filter = proc do |f|
+          f.when Work, &do_work 
+          f.when Ready, &do_ready
+          f.when Stop, &do_stop
+          f.when(Actor::DeadActorError) do |exit|
             unless exit.reason.nil?
               node = exit.actor
               warn "Node #{node.rank}/#{node.size} exit: #{exit.reason.inspect}"
               exception node.rank, exit
             end
           end
+        end 
+
+        loop do
+          receive(&filter)
         end
-     end
 
       end
 

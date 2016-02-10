@@ -54,27 +54,29 @@ describe "mpi_gatherv" do
 
   end
 
-  it "mpi_gatherv 100" do
+  it "mpi_gatherv 80" do
 
+    dim = 80
     res = proc{
-            mpi_gatherv [rank+9] , [0]*99 , 0 , 1..99 , rank
-          }*100
+            mpi_gatherv [rank+9] , [0]*(dim-1) , 0 , 1..(dim-1) , rank
+          }*dim
 
-    res.size.should == 100
-    res.first.should == (10..108).to_a
-    res[1..-1].should == [ [0]*99 ]*99
+    res.size.should == dim
+    res.first.should == (10..(dim+8)).to_a
+    res[1..-1].should == [ [0]*(dim-1) ]*(dim-1)
 
   end
 
-  it "mpi_gatherv 100 with tx/rx intersection" do
+  it "mpi_gatherv 80 with tx/rx intersection" do
 
+    dim = 80
     res = proc{
-            mpi_gatherv [rank+9] , [0]*100 , 0 , 0..99 , rank
-          }*100
+            mpi_gatherv [rank+9] , [0]*dim , 0 , 0..(dim-1) , rank
+          }*dim
 
-    res.size.should == 100
-    res.first.should == (9..108).to_a
-    res[1..-1].should == [ [0]*100 ]*99
+    res.size.should == dim
+    res.first.should == (9..(dim+8)).to_a
+    res[1..-1].should == [ [0]*dim ]*(dim-1)
 
   end
 
