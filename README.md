@@ -6,10 +6,13 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
 ### Installation
 
+```shell
     $ gem install "fresh-mc"
+```
 
 ### Usage
 
+```ruby
     require 'fresh-mc'
 
     proc{
@@ -19,23 +22,26 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
         sleep 3-rank
       }
     }*3
+```
 
 ### Docker container
 
 1. **[Install docker](https://docs.docker.com/installation/)**.
 
+    ```
     https://hub.docker.com/r/fresh/fresh
+    ```
 
 2. **Run an instance of the container**.
 
     ```shell
-      docker run -it fresh/fresh
+    $ docker run -it fresh/fresh
     ```
 
 3. **Run your application**.
 
     ```shell
-       echo "proc{ p sleep rank }*4" | docker run -i fresh/fresh
+    $ echo "proc{ p sleep rank }*4" | docker run -i fresh/fresh
     ```
 
 ### Credits
@@ -47,19 +53,27 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
 First, clone this repository:
 
+    ```shell
     $ git clone https://github.com/medols/fresh.git
+    ```
 
 Then move to it:
 
+    ```shell
     $ cd fresh
+    ```
 
 Clone [MSpec](http://github.com/ruby/mspec):
 
+    ```shell
     $ git clone https://github.com/ruby/mspec.git ../mspec
+    ```
 
 And run the Fresh suite:
 
+    ```shell
     $ ../mspec/bin/mspec
+    ```
 
 This will execute all the Fresh specs.
 

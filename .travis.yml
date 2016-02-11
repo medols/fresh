@@ -1,6 +1,6 @@
 language: ruby
 rvm:
-- rbx-3.14
+- rbx
 install:
 - gem install codeclimate-test-reporter
 - gem install rubinius-actor

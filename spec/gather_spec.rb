@@ -1,17 +1,8 @@
-describe "mpi_gatherv" do
+require File.expand_path('../spec_helper', __FILE__)
 
-  it "mpi_gatherv 4" do
+describe "gather" do
 
-    res = proc{
-            mpi_gatherv [rank+9] , [0,0,0] , 0 , [1,2,3] , rank
-          }*4
-
-    res.size.should == 4
-    res.should == [[10,11,12], [0,0,0], [0,0,0], [0,0,0]]
-
-  end
-
-  it "mpi_gatherv 4 2" do
+  it "4 nodes" do
 
     res = proc{ gather [rank+9] , [0,0,0] , 0 , [1,2,3] }*4
     res.size.should == 4
@@ -19,10 +10,10 @@ describe "mpi_gatherv" do
 
   end
 
-  it "mpi_gatherv 4 with tx/rx intersection" do
+  it "4 nodes with tx/rx intersection" do
 
     res = proc{
-            mpi_gatherv [rank+9] , [0,0,0,0] , 0 , [0,1,2,3] , rank
+            gather [rank+9] , [0,0,0,0] , 0 , [0,1,2,3]
           }*4
 
     res.size.should == 4
@@ -30,10 +21,10 @@ describe "mpi_gatherv" do
 
   end
 
-  it "mpi_gatherv 8" do
+  it "8 nodes" do
 
     res = proc{
-            mpi_gatherv [rank+9] , [0,0,0,0,0,0,0] , 0 , [1,2,3,4,5,6,7] , rank
+            gather [rank+9] , [0,0,0,0,0,0,0] , 0 , [1,2,3,4,5,6,7]
           }*8
 
     res.size.should == 8
@@ -42,10 +33,10 @@ describe "mpi_gatherv" do
 
   end
 
-  it "mpi_gatherv 8 with tx/rx intersection" do
+  it "8 nodes with tx/rx intersection" do
 
     res = proc{
-            mpi_gatherv [rank+9] , [0,0,0,0,0,0,0,0] , 0 , [0,1,2,3,4,5,6,7] , rank
+            gather [rank+9] , [0,0,0,0,0,0,0,0] , 0 , [0,1,2,3,4,5,6,7]
           }*8
 
     res.size.should == 8
@@ -54,11 +45,11 @@ describe "mpi_gatherv" do
 
   end
 
-  it "mpi_gatherv 80" do
+  it "100 nodes" do
 
-    dim = 80
+    dim = 100
     res = proc{
-            mpi_gatherv [rank+9] , [0]*(dim-1) , 0 , 1..(dim-1) , rank
+            gather [rank+9] , [0]*(dim-1) , 0 , 1..(dim-1) 
           }*dim
 
     res.size.should == dim
@@ -67,11 +58,11 @@ describe "mpi_gatherv" do
 
   end
 
-  it "mpi_gatherv 80 with tx/rx intersection" do
+  it "100 nodes with tx/rx intersection" do
 
-    dim = 80
+    dim = 100
     res = proc{
-            mpi_gatherv [rank+9] , [0]*dim , 0 , 0..(dim-1) , rank
+            gather [rank+9] , [0]*dim , 0 , 0..(dim-1)
           }*dim
 
     res.size.should == dim
