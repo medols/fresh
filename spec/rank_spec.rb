@@ -1,16 +1,16 @@
 require File.expand_path('../spec_helper', __FILE__)
 
-describe "mpi_rank" do
+describe "rank" do
 
-  it "mpi_rank 2" do
+  it "2 nodes" do
     ( proc{ rank }*2 ).should == [0,1]
   end
 
-  it "mpi_rank 4" do
+  it "4 nodes" do
     ( proc{ rank }*4 ).should == [0,1,2,3]
   end
 
-  it "mpi_rank 100" do
+  it "100 nodes" do
     ( proc{ rank }*100 ).should == 100.times.to_a
   end
 
