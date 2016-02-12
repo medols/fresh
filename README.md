@@ -1,6 +1,6 @@
 # Fresh
 
-[![Build Status](https://travis-ci.org/medols/fresh.svg)](https://travis-ci.org/medols/fresh) [![Code Climate](https://codeclimate.com/github/medols/fresh/badges/gpa.svg)](https://codeclimate.com/github/medols/fresh) [![Test Coverage](https://codeclimate.com/github/medols/fresh/badges/coverage.svg)](https://codeclimate.com/github/medols/fresh/coverage) [![Issue Count](https://codeclimate.com/github/medols/fresh/badges/issue_count.svg)](https://codeclimate.com/github/medols/fresh)
+[![Build Status](https://travis-ci.org/medols/fresh.svg)](https://travis-ci.org/medols/fresh) [![Code Climate](https://codeclimate.com/github/medols/fresh/badges/gpa.svg)](https://codeclimate.com/github/medols/fresh) [![Test Coverage](https://codeclimate.com/github/medols/fresh/badges/coverage.svg)](https://codeclimate.com/github/medols/fresh/coverage) [![Issue Count](https://codeclimate.com/github/medols/fresh/badges/issue_count.svg)](https://codeclimate.com/github/medols/fresh) [![Gem Version](https://badge.fury.io/rb/fresh-mc.svg)](https://badge.fury.io/rb/fresh-mc)
 
 Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
