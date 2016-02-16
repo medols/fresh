@@ -47,12 +47,12 @@ class Fresh < Rubinius::Actor
       sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }#.clone
       rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
     }
-    comm.each{ |s| Fresh[s] << :ack }
+    comm.each{ |s| @@visor.linked[s] << :ack }
     rbuf=rbuf.flatten
   end
 
   def mpi_bcast buf , comm 
-    comm.each{ |s| Fresh[s] << buf }
+    comm.each{ |s| @@visor.linked[s] << buf }
     comm.each{
       Rubinius::Actor.receive{|f| f.when(:ack){|m| m} }
     }
@@ -78,7 +78,6 @@ class Fresh < Rubinius::Actor
   # @return [Array] the receiver buffer with the gathered data.
 
   def gather sbuf , rbuf , root , comm
-    #rk=comm.find_index(rr)
     rk=comm.find_index(rank)
     commderoot=comm.to_a-[root]
     mpi_gather_tx sbuf , rbuf , root , comm , rank  if commderoot.include? rank
@@ -87,7 +86,7 @@ class Fresh < Rubinius::Actor
     rbuf.flatten
   end
 
-  def sendrec sbuf , rbuf , root , comm
+  def sendrecv sbuf , rbuf , root , comm
     root=root.to_a
     comm=comm.to_a
     mpi_gather_rx sbuf , rbuf , root , [ comm[root.find_index rank] ] , rank  if root.include? rank
@@ -192,24 +191,24 @@ class Fresh < Rubinius::Actor
       finalize
     end
 
-    def [] i
-      @@visor.linked[i]
-    end
- 
-    def init_manager freshsize 
-      @@size= freshsize
-      @@ret = [nil]*@@size
-      @@exc = Array.new(@@size+1){[]}
-      @@work_loop = proc do |rank|#,size|
-        current.rank=rank
+    def do_loop
+      proc do |frank|
+        current.rank=frank
         current.size=@@size
         work = receive
-        sleep 0.01
-        #Fresh[rank]=current.instance_exec( &work.msg )
-        @@ret[rank]=current.instance_exec( &work.msg )
+        sleep 0.1
+        @@ret[frank]=current.instance_exec( &work.msg )
         @@visor << Ready[current]
         receive
       end
+    end
+
+    def init_manager freshsize 
+      @@size= freshsize
+      @@nodes = []
+      @@ret = [nil]*@@size
+      @@exc = Array.new(@@size+1){[]}
+      @@work_end = false
     end
 
     def do_filter do_stop, do_ready, do_work
@@ -219,9 +218,8 @@ class Fresh < Rubinius::Actor
           f.when  Stop, &do_stop
           f.when(Actor::DeadActorError) do |ex|
             unless ex.reason.nil?
-              #node = ex.actor
-              #warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.inspect}"
-              #exception node.rank, ex
+              node = ex.actor
+              warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.inspect}"
               @@exc[ex.actor.rank]<<ex
             end
           end
@@ -229,25 +227,31 @@ class Fresh < Rubinius::Actor
     end
 
     def init freshsize
+
       init_manager freshsize
 
       @@visor = spawn(@@size) do |fsize|
-        work_end = false
-        Actor.trap_exit = true
-        fsize.times{ spawn_link(current.linked.size,&@@work_loop) }
-        nodes=current.linked.dup
 
-        do_stop  =proc{ work_end = true }
-        do_ready =proc{ |who|  nodes<<who.this
-            nodes.each{ |rw|   rw << Stop[:now]  } if work_end and nodes.size==fsize }
-        do_work  =proc{ |work| nodes.pop << work } 
+        Actor.trap_exit = true
+        fsize.times{ spawn_link(current.linked.size,&do_loop) }
+        sleep 0.01 until @@visor.linked.size==freshsize
+        sleep 0.1
+
+        @@nodes=current.linked.dup
+
+        do_ready =proc{ |who|
+            @@nodes<<who.this
+            @@nodes.each{ |rw| rw << Stop[:now] } if @@work_end and @@nodes.size==fsize }
+        do_work  =proc{ |work| @@nodes.pop << work unless @@nodes.empty? }
+        do_stop  =proc{ @@work_end = true }
 
         filter=do_filter do_stop, do_ready, do_work
         loop { receive(&filter) }
+
       end
 
       sleep 0.01 until @@visor.linked.size==freshsize
-      sleep 0.01
+      sleep 0.1
     end
 
     def multinode 
@@ -261,6 +265,7 @@ class Fresh < Rubinius::Actor
     def finalize
       @@visor<<Stop[:now]
       sleep 0.01 until @@visor.linked.empty?
+      sleep 0.1
       raise multinode unless @@exc.flatten.empty?
       @@ret
     end

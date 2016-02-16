@@ -1,10 +1,10 @@
 require File.expand_path('../spec_helper', __FILE__)
 
-describe "sendrec" do
+describe "sendrecv" do
 
   it "2 nodes" do
 
-    res = proc{ sendrec [rank+9] , [0] , [0] , [1] }*2 
+    res = proc{ sendrecv [rank+9] , [0] , [0] , [1] }*2 
     res.size.should == 2
     res.should == [[10],[0]]
 
@@ -13,7 +13,7 @@ describe "sendrec" do
   it "4 nodes" do
 
     res = proc{ 
-            sendrec [rank+9] , [0] , [0,2] , [1,3]  
+            sendrecv [rank+9] , [0] , [0,2] , [1,3]  
           }*4 
 
     res.size.should == 4
@@ -24,7 +24,7 @@ describe "sendrec" do
   it "100 nodes" do
 
     res = proc{ 
-            sendrec [rank+9] , [0] , (0..98).step(2) , (1..99).step(2)  
+            sendrecv [rank+9] , [0] , (0..98).step(2) , (1..99).step(2)  
           }*100 
 
     res.size.should == 100

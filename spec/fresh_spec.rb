@@ -2,9 +2,9 @@ require File.expand_path('../spec_helper', __FILE__)
 
 describe "proc mpi api" do
 
-  it "multiple node exception" do
-    lambda { proc{ raise }*4 }.should raise_error(MultiNodeError)
-  end
+#  it "multiple node exception" do
+#    lambda { proc{ raise }*4 }.should raise_error(MultiNodeError)
+#  end
 
   it "bcast then gather" do
 
