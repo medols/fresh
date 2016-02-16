@@ -191,6 +191,11 @@ class Fresh < Rubinius::Actor
       finalize
     end
 
+    def wait_size freshsize
+        sleep 0.01 until @@visor.linked.size==freshsize
+        sleep 0.1
+    end
+
     def do_loop
       proc do |frank|
         current.rank=frank
@@ -213,9 +218,9 @@ class Fresh < Rubinius::Actor
 
     def do_filter do_stop, do_ready, do_work
         proc do |f|
-          f.when  Work, &do_work 
+          f.when Work, &do_work 
           f.when Ready, &do_ready
-          f.when  Stop, &do_stop
+          f.when Stop, &do_stop
           f.when(Actor::DeadActorError) do |ex|
             unless ex.reason.nil?
               node = ex.actor
@@ -234,8 +239,7 @@ class Fresh < Rubinius::Actor
 
         Actor.trap_exit = true
         fsize.times{ spawn_link(current.linked.size,&do_loop) }
-        sleep 0.01 until @@visor.linked.size==freshsize
-        sleep 0.1
+        wait_size freshsize
 
         @@nodes=current.linked.dup
 
@@ -250,8 +254,7 @@ class Fresh < Rubinius::Actor
 
       end
 
-      sleep 0.01 until @@visor.linked.size==freshsize
-      sleep 0.1
+      wait_size freshsize
     end
 
     def multinode 
@@ -264,8 +267,7 @@ class Fresh < Rubinius::Actor
 
     def finalize
       @@visor<<Stop[:now]
-      sleep 0.01 until @@visor.linked.empty?
-      sleep 0.1
+      wait_size 0
       raise multinode unless @@exc.flatten.empty?
       @@ret
     end
