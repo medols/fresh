@@ -10,6 +10,14 @@ describe "sendrecv" do
 
   end
 
+#  it "2 nodes with tx/rx intersection" do
+#
+#    res = proc{ sendrecv [rank+9] , [0] , [0,1] , [1,0] }*2 
+#    res.size.should == 2
+#    res.should == [[10],[9]]
+#
+#  end
+
   it "4 nodes" do
 
     res = proc{ 

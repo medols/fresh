@@ -46,34 +46,34 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
 ### Credits
 
-    Copyright 2015  Jaume Masip-Torne <jmasip@gianduia.net>
-              2015  Ismael Merodio-Codinachs <ismael@gianduia.net>
+    Copyright 2015-2016  Jaume Masip-Torne <jmasip@gianduia.net>
+              2015-2016  Ismael Merodio-Codinachs <ismael@gianduia.net>
 
 ### Running the specs
 
 First, clone this repository:
 
-    ```shell
+```shell
     $ git clone https://github.com/medols/fresh.git
-    ```
+```
 
 Then move to it:
 
-    ```shell
+```shell
     $ cd fresh
-    ```
+```
 
 Clone [MSpec](http://github.com/ruby/mspec):
 
-    ```shell
+```shell
     $ git clone https://github.com/ruby/mspec.git ../mspec
-    ```
+```
 
 And run the Fresh suite:
 
-    ```shell
+```shell
     $ ../mspec/bin/mspec
-    ```
+```
 
 This will execute all the Fresh specs.
 

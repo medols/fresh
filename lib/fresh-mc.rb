@@ -33,8 +33,6 @@ require 'rubinius/actor'
 
 class Fresh < Rubinius::Actor 
 
-  extend Rubinius
-
   attr_accessor :rank
   attr_accessor :size
 
@@ -67,19 +65,19 @@ class Fresh < Rubinius::Actor
     mpi_gather sbuf , rbuf , comm
   end
 
-  # Gather from many to one.
-  #
-  # @param sbuf [Array] the send buffer.
-  # @param rbuf [Array] the receiver buffer.
-  # @param root [Fixnum] the node that receives all data.
-  # @param comm [Array] the nodes that have data to send.
-  # @return [Array] the receiver buffer with the gathered data.
+# Gather from many to one.
+#
+# @param sbuf [Array] the send buffer.
+# @param rbuf [Array] the receiver buffer.
+# @param root [Fixnum] the node that receives all data.
+# @param comm [Array] the nodes that have data to send.
+# @return [Array] the receiver buffer with the gathered data.
 
   def gather sbuf , rbuf , root , comm
-    rk=comm.find_index(rank)
     commderoot=comm.to_a-[root]
     mpi_gather_tx sbuf , rbuf , root , comm if commderoot.include? rank
-    mpi_gather_rx sbuf , rbuf , root , commderoot if root==rank
+    mpi_gather_rx sbuf , rbuf , root , commderoot if [root].include? rank
+    rk=comm.find_index(rank)
     rbuf[rk..(rk+sbuf.size-1)]=sbuf if (comm.to_a & [root]).include? rank
     rbuf.flatten
   end
@@ -87,9 +85,13 @@ class Fresh < Rubinius::Actor
   def sendrecv sbuf , rbuf , root , comm
     root=root.to_a
     comm=comm.to_a
-    mpi_gather_rx sbuf , rbuf , root , [ comm[root.find_index rank] ] if root.include? rank
-    mpi_gather_tx sbuf , rbuf , root[ comm.find_index rank ] , [ rank ] if comm.include? rank
-    rbuf
+    commderoot=comm-root
+    rootdecomm=root-comm
+    mpi_gather_tx sbuf , rbuf , root[ comm.find_index rank ] , [ rank ] if commderoot.include? rank
+    mpi_gather_rx sbuf , rbuf , root , [ comm[root.find_index rank] ] if rootdecomm.include? rank
+    rk=comm.find_index(rank)
+    rbuf[rk..(rk+sbuf.size-1)]=sbuf if (comm & root).include? rank
+    rbuf.flatten
   end
 
   def mpi_bcast_tx sbuf , _rbuf , _root , comm
@@ -101,30 +103,17 @@ class Fresh < Rubinius::Actor
     mpi_gather sbuf , rbuf , [ root ]
   end
 
-  # Broadcast  a copy of the send buffer +sbuf+ from +root+ to the receive buffer +rbuf+ of all nodes in the receiver array +comm+
-  #
-  # ==== Arguments 
-  #
-  # [sbuf] Send buffer Array.
-  # [rbuf] Receive buffer Array.
-  # [root] Sender rank Fixnum.
-  # [comm] Receiver rank Array.
-  #
-  # ==== Returns
-  #
-  # [Array] 
-  #
-  # ==== Raises
-  #
-  # [MultiNodeError] If any node raises an exception
-  #
-  # ==== Example
-  #
-  # <code> 
-  # # Broadcast sequence 0..7 individually from node 0 to nodes [0,1,2,3]
-  #
-  # p proc{8.times.map{|i| bcast [i] , [0] , 0 , 0..3}.flatten }*4 
-  # </code>
+# Broadcast  a copy of the send buffer +sbuf+ from +root+ to the receive buffer +rbuf+ of all nodes in the receiver array +comm+
+#
+# @param sbuf [Array] the initialized sender buffer.
+# @param rbuf [Array] the initialized receiver buffer.
+# @param root [Fixnum] the sender rank.
+# @param comm [Array] the set of receiver ranks. 
+# @return [Array] the receiver buffer +rbuf+ with the incomming data
+# @raise [MultiNodeError] If at least one node or the visor raises an exception
+# @example Broadcast sequence 0..7 individually from node 0 to nodes [0,1,2,3]
+# p proc{8.times.map{|i| bcast [i] , [0] , 0 , 0..3}.flatten }*4 
+#
 
   def bcast sbuf , rbuf , root , comm 
     commderoot=comm.to_a-[root]
@@ -134,40 +123,45 @@ class Fresh < Rubinius::Actor
     rbuf
   end
 
-  def mpi_scatter_tx sbuf , _rbuf , _root , comm 
+  def mpi_scatter_tx sbuf , _rbuf , root , comm 
+    return unless root == rank
     sbuf.each_slice(sbuf.size/comm.size).zip(comm) do |sb,cm|
       tbuf=[0].concat sb
       mpi_bcast tbuf , [cm]
     end
   end
 
-  def mpi_scatter_rx sbuf , rbuf , root , _comm
+  def mpi_scatter_rx sbuf , rbuf , root , comm
+    return unless comm.include? rank
     mpi_gather sbuf , rbuf , [ root ]
   end
 
   def scatter sbuf , rbuf , root , comm 
-    mpi_scatter_tx sbuf , rbuf , root , comm if root == rank
-    mpi_scatter_rx sbuf , rbuf , root , comm if comm.include? rank
+    mpi_scatter_tx sbuf , rbuf , root , comm #if root == rank
+    mpi_scatter_rx sbuf , rbuf , root , comm #if comm.include? rank
     rbuf
   end
 
   def mpi_allgather_tx sbuf , _rbuf , root , comm 
+    return unless root.include? rank
     rnod=root.find_index rank
     tbuf=[rnod].concat sbuf
     mpi_bcast tbuf , comm
   end
 
-  def mpi_allgather_rx sbuf , rbuf , root , _comm 
+  def mpi_allgather_rx sbuf , rbuf , root , comm
+    return unless comm.include? rank
     mpi_gather sbuf , rbuf , root
   end
 
   def allgather sbuf , rbuf , root , comm 
-    mpi_allgather_tx sbuf , rbuf , root , comm if root.include? rank
-    mpi_allgather_rx sbuf , rbuf , root , comm if comm.include? rank
+    mpi_allgather_tx sbuf , rbuf , root , comm # if root.include? rank
+    mpi_allgather_rx sbuf , rbuf , root , comm # if comm.include? rank
     rbuf
   end
 
   def mpi_alltoall_tx sbuf , _rbuf , root , comm 
+    return unless root.include? rank
     sbuf.each_slice(sbuf.size/comm.size).zip(comm) do |sb,cm|
       rnod=root.find_index rank
       tbuf=[rnod].concat sb
@@ -175,17 +169,57 @@ class Fresh < Rubinius::Actor
     end
   end
 
-  def mpi_alltoall_rx sbuf , rbuf , root , _comm 
+  def mpi_alltoall_rx sbuf , rbuf , root , comm 
+    return unless comm.include? rank
     mpi_gather sbuf , rbuf , root
   end
 
   def alltoall sbuf , rbuf , root , comm 
-    mpi_alltoall_tx sbuf , rbuf , root , comm if root.include? rank
-    mpi_alltoall_rx sbuf , rbuf , root , comm if comm.include? rank
+    mpi_alltoall_tx sbuf , rbuf , root , comm # if root.include? rank
+    mpi_alltoall_rx sbuf , rbuf , root , comm # if comm.include? rank
     rbuf
   end
 
   class << self
+
+    @@size= 0
+    @@nodes = []
+    @@ret = []
+    @@exc = []
+    @@work_end = false
+    @@visor = nil
+
+    @@Do_work = proc{ |work| @@nodes.pop << work }
+    @@Do_stop = proc{ @@work_end = true }
+    @@Do_ready= proc do |who|
+          @@nodes<<who.this
+          @@nodes.each{ |rw| rw << Stop[:now] } if @@work_end and @@nodes.size==@@size
+        end
+    @@Do_excp = proc do |ex|
+          unless ex.reason.nil?
+            node = ex.actor
+            warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.inspect}"
+            @@exc[ex.actor.rank]<<ex
+          end
+        end
+    @@Do_filter = proc do |f|
+          f.when Work , & @@Do_work 
+          f.when Ready, & @@Do_ready
+          f.when Stop , & @@Do_stop
+          f.when Rubinius::Actor::DeadActorError, & @@Do_excp
+        end 
+ 
+    def do_loop
+      proc do |rk|
+        current.rank=rk
+        current.size=@@size
+        work = Rubinius::Actor.receive
+        sleep 0.1
+        @@ret[rk]=current.instance_exec( &work.msg )
+        @@visor << Ready[current]
+        Rubinius::Actor.receive
+      end
+    end
 
     def start mproc, mult 
       init mult
@@ -198,62 +232,25 @@ class Fresh < Rubinius::Actor
         sleep 0.1
     end
 
-    def do_loop
-      proc do |frank|
-        current.rank=frank
-        current.size=@@size
-        work = Rubinius::Actor.receive
-        sleep 0.1
-        @@ret[frank]=current.instance_exec( &work.msg )
-        @@visor << Ready[current]
-        Rubinius::Actor.receive
-      end
-    end
-
-    def do_filter dready , dwork, dstop
-        proc do |f|
-          f.when Work, &dwork 
-          f.when Ready, &dready
-          f.when Stop, &dstop
-          f.when Actor::DeadActorError do |ex|
-            unless ex.reason.nil?
-              node = ex.actor
-              warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.inspect}"
-              @@exc[ex.actor.rank]<<ex
-            end
-          end
-        end 
-    end
- 
     def init_manager freshsize 
       @@size= freshsize
-      @@nodes = []
+#      @@nodes = []
       @@ret = [nil]*@@size
       @@exc = Array.new(@@size+1){[]}
-      @@work_end = false
+#      @@work_end = false
     end
-       
+
     def init freshsize
 
       init_manager freshsize
 
-      @@visor = spawn(@@size) do |fsize|
-
-        Actor.trap_exit = true
-        fsize.times{|i| spawn_link(i,&do_loop) }
-        wait_size freshsize
-
-        @@nodes = current.linked.dup
-
-        do_ready =proc{ |who|
-            @@nodes<<who.this
-            @@nodes.each{ |rw| rw << Stop[:now] } if @@work_end and @@nodes.size==fsize }
-        do_work  =proc{ |work| @@nodes.pop << work unless @@nodes.empty? }
-        do_stop  =proc{ @@work_end = true }
-
-        filter=do_filter do_ready , do_work, do_stop
-        loop { Rubinius::Actor.receive(&filter) }
-
+      @@visor = spawn do 
+        Rubinius::Actor.trap_exit = true
+        @@size.times{|i| spawn_link(i,&do_loop) }
+        #wait_size freshsize
+        @@nodes.concat current.linked.dup
+        #filter=do_filter #@@do_ready 
+        loop { Rubinius::Actor.receive(&@@Do_filter) }
       end
 
       wait_size freshsize
@@ -270,6 +267,7 @@ class Fresh < Rubinius::Actor
     def finalize
       @@visor<<Stop[:now]
       wait_size 0
+      @@nodes=[]
       raise multinode unless @@exc.flatten.empty?
       @@ret
     end
