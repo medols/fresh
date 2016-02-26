@@ -36,6 +36,14 @@ class Fresh < Rubinius::Actor
   attr_accessor :rank
   attr_accessor :size
 
+  def root
+    0
+  end
+
+  def all
+    (0...size).to_a
+  end
+
   def linked
     @links
   end
@@ -99,7 +107,6 @@ class Fresh < Rubinius::Actor
     rootdecomm = root - comm
     mpi_gather_tx sbuf , rbuf , root [ comm.find_index rank ] , [ rank ] if commderoot.include? rank
     mpi_gather_rx sbuf , rbuf , root , [ comm[root.find_index rank] ] if rootdecomm.include? rank
-    mpi_gather_lc sbuf , rbuf , root , comm
     [*rbuf]
   end
 
@@ -220,25 +227,32 @@ class Fresh < Rubinius::Actor
     @@visor = nil
 
     @@Do_work = proc{ |work| @@nodes.pop << work }
+
     @@Do_stop = proc{ @@work_end = true }
-    @@Do_ready= proc do |who|
-          @@nodes<<who.this
-          @@nodes.each{ |rw| rw << Stop[:now] } if @@work_end and @@nodes.size==@@size
-        end
-    @@Do_excp = proc do |ex|
+
+    @@Do_ready= 
+      proc do |who|
+        @@nodes<<who.this
+        @@nodes.each{ |rw| rw << Stop[:now] } if @@work_end and @@nodes.size==@@size
+      end
+
+    @@Do_excp = 
+      proc do |ex|
           unless ex.reason.nil?
-            node = ex.actor
-            #warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.inspect}"
-            warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.backtrace.inspect}"
-            @@exc[ex.actor.rank]<<ex
-          end
+          node = ex.actor
+          #warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.inspect}"
+          warn "Node #{node.rank}/#{node.size} exit: #{ex.reason.backtrace.inspect}"
+          @@exc[ex.actor.rank]<<ex
         end
-    @@Do_filter = proc do |f|
-          f.when Work , & @@Do_work 
-          f.when Ready, & @@Do_ready
-          f.when Stop , & @@Do_stop
-          f.when Rubinius::Actor::DeadActorError, & @@Do_excp
-        end 
+      end
+
+    @@Do_filter = 
+      proc do |f|
+        f.when Work , & @@Do_work 
+        f.when Ready, & @@Do_ready
+        f.when Stop , & @@Do_stop
+        f.when Rubinius::Actor::DeadActorError, & @@Do_excp
+      end 
  
     def do_loop
       proc do |rk|
