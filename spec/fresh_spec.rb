@@ -44,7 +44,7 @@ describe "proc mpi api" do
       coef=[1,2,1,2,1,2,3,2,3,2,0,0]
 
       7.times.map{|i|
-        rbuf1=allgather [val[rank][i]] , [0,0] , [4,5] , [1,2,3]
+        rbuf1=allgather [val[rank][i]] , [0,0] , [1,2,3] , [4,5]
         rbuf2=gather [rbuf1[0]*coef[2*rank-1] + rbuf1[1]*coef[2*rank]] , [0,0,0] , 0 , [1,2,3]
         rbuf2[0]*coef[7] + rbuf2[1]*coef[8] + rbuf2[2]*coef[9]
       }

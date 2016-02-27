@@ -4,7 +4,15 @@ describe "alltoall" do
 
   it "4 nodes" do
 
-    res = proc{ alltoall [3,2] , [0,0] , [0,1] , [2,3] }*4
+    res = proc{ alltoall [3,2] , [0,0] , [2,3] , [0,1] }*4
+    res.size.should == 4
+    res.should == [[0,0], [0,0], [3,3], [2,2]]
+
+  end
+
+  it "4 nodes without defaults" do
+
+    res = proc{ alltoall [3,2] , from:[0,1] , to:[2,3] }*4
     res.size.should == 4
     res.should == [[0,0], [0,0], [3,3], [2,2]]
 
@@ -13,7 +21,7 @@ describe "alltoall" do
   it "8 nodes" do
 
     res = proc{
-            alltoall [7,6,5,4], [0,0,0,0] , [0,1,2,3] , [4,5,6,7] 
+            alltoall [7,6,5,4], [0,0,0,0] , [4,5,6,7] , [0,1,2,3]
           }*8
 
     res.size.should == 8
@@ -25,7 +33,7 @@ describe "alltoall" do
   it "100 nodes" do
 
     res = proc{
-            alltoall (50..99).to_a.reverse, [0]*50 , 0..49 , 50..99
+            alltoall (50..99).to_a.reverse, [0]*50 , 50..99 , 0..49
           }*100
 
     res.size.should == 100 

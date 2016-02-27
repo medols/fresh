@@ -19,6 +19,38 @@ describe "Broadcast with bcast" do
 
   end
 
+  it "4 nodes with default from: and to:" do
+
+    res = proc{ bcast size-rank }*4
+    res.size.should == 4
+    res.should == [[4], [4], [4], [4]]
+
+  end
+
+  it "4 nodes with default to:" do
+
+    res = proc{ bcast size-rank , from:1 }*4
+    res.size.should == 4
+    res.should == [[3], [3], [3], [3]]
+
+  end
+
+  it "4 nodes with default from:" do
+
+    res = proc{ bcast size-rank , to:[1,2,3] }*4
+    res.size.should == 4
+    res.should == [[0], [4], [4], [4]]
+
+  end
+
+  it "4 nodes without defaults" do
+
+    res = proc{ bcast size-rank , from:1 , to:[1,2,3] }*4
+    res.size.should == 4
+    res.should == [[0], [3], [3], [3]]
+
+  end
+
   it "8 nodes" do
 
     res = proc{

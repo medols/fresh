@@ -7,7 +7,7 @@ describe "allgather" do
     res = proc{
             val=[[], [], [*(1..7)], [*(11..17)] ]
             7.times.map{|i|
-              allgather [val[rank][i]] , [0,0] , [2,3] , [0,1]
+              allgather [val[rank][i]] , [0,0] , [0,1], [2,3] 
             }
           }*4
 
@@ -36,12 +36,29 @@ describe "allgather" do
 #
 #  end
 
+  it "4 nodes without defaults" do
+
+    res = proc{
+            val=[[], [], [*(1..7)], [*(11..17)] ]
+            7.times.map{|i|
+              allgather [val[rank][i]] , from:2..3 , to:0..1
+            }
+          }*4
+
+    res.size.should == 4
+    res[0].should == [*1..7].zip([*11..17])
+    res[1].should == [*1..7].zip([*11..17])
+    res[2].should == [[0, 0]]*7
+    res[3].should == [[0, 0]]*7
+
+  end
+
   it "8 nodes" do
 
     res = proc{
             val=[[],[],[], [], [*1..7], [*11..17], [*21..27], [*31..37] ]
             7.times.map{|i|
-              allgather [val[rank][i]] , [0]*4 , 4..7 , 0..3 
+              allgather [val[rank][i]] , [0]*4 , 0..3, 4..7 
             }
           }*8
 
@@ -97,7 +114,7 @@ describe "allgather" do
     res = proc{
             val=([[]]*dim2).concat dim2.times.map{|i| ((1+(10*i))..(7+(10*i))).to_a}
             7.times.map{|i|
-              allgather [val[rank][i]] , [0]*dim2 , dim2..(dim-1) , 0..(dim2-1) 
+              allgather [val[rank][i]] , [0]*dim2 , 0..(dim2-1) , dim2..(dim-1) 
             }
           }*dim
 

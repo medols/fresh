@@ -21,6 +21,38 @@ describe "gather" do
 
   end
 
+  it "4 nodes with default from: and to:" do
+
+    res = proc{ gather [rank+9] }*4
+    res.size.should == 4
+    res.should == [[9,10,11,12], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+
+  end
+
+  it "4 nodes with default to:" do
+
+    res = proc{ gather [rank+9] , from:[1,2,3] }*4
+    res.size.should == 4
+    res.should == [[10,11,12], [0,0,0], [0,0,0], [0,0,0]]
+
+  end
+
+  it "4 nodes with default from:" do
+
+    res = proc{ gather [rank+9] , to:1 }*4
+    res.size.should == 4
+    res.should == [[0,0,0,0], [9,10,11,12], [0,0,0,0], [0,0,0,0]]
+
+  end
+
+  it "4 nodes without defaults" do
+
+    res = proc{ gather [rank+9] , from:[1,2,3], to:1 }*4
+    res.size.should == 4
+    res.should == [[0,0,0], [10,11,12], [0,0,0], [0,0,0]]
+
+  end
+
   it "8 nodes" do
 
     res = proc{
@@ -42,6 +74,25 @@ describe "gather" do
     res.size.should == 8
     res.first.should == (9..16).to_a
     res[1..-1].should == [ [0]*8 ]*7
+
+  end
+
+  it "8 nodes with default from: and to:" do
+
+    res = proc{ gather [rank+9] }*8
+
+    res.size.should == 8
+    res.first.should == (9..16).to_a
+    res[1..-1].should == [ [0]*8 ]*7
+
+  end
+
+  it "8 nodes with default to:" do
+
+    res = proc{ gather [rank+9] , from:[1,2,3,4,5,6,7] }*8
+    res.size.should == 8
+    res.first.should == (10..16).to_a
+    res[1..-1].should == [ [0]*7 ]*7
 
   end
 
@@ -68,6 +119,26 @@ describe "gather" do
     res.size.should == dim
     res.first.should == (9..(dim+8)).to_a
     res[1..-1].should == [ [0]*dim ]*(dim-1)
+
+  end
+
+  it "100 nodes with default from: and to:" do
+
+    dim = 100
+    res = proc{ gather [rank+9] }*dim
+    res.size.should == dim
+    res.first.should == (9..(dim+8)).to_a
+    res[1..-1].should == [ [0]*dim ]*(dim-1)
+
+  end
+
+  it "100 nodes with default to:" do
+
+    dim = 100
+    res = proc{ gather [rank+9] , from:1..(dim-1) }*dim
+    res.size.should == dim
+    res.first.should == (10..(dim+8)).to_a
+    res[1..-1].should == [ [0]*(dim-1) ]*(dim-1)
 
   end
 

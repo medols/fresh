@@ -10,6 +10,30 @@ describe "sendrecv" do
 
   end
 
+  it "2 nodes with default to:" do
+
+    res = proc{ sendrecv [rank+9] , from:1 }*2 
+    res.size.should == 2
+    res.should == [[10],[0]]
+
+  end
+
+  it "2 nodes with default from:" do
+
+    res = proc{ sendrecv [rank+9] , to:1 }*2 
+    res.size.should == 2
+    res.should == [[0],[9]]
+
+  end
+
+  it "2 nodes without defaults" do
+
+    res = proc{ sendrecv [rank+9] , from:1 , to:root }*2 
+    res.size.should == 2
+    res.should == [[10],[0]]
+
+  end
+
 #  it "2 nodes with tx/rx intersection" do
 #
 #    res = proc{ sendrecv [rank+9] , [0] , [0,1] , [1,0] }*2 

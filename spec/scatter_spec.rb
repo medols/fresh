@@ -18,6 +18,38 @@ describe "scatter" do
 
   end
 
+  it "4 nodes with default from: and to:" do
+
+    res = proc{ scatter all.reverse }*4
+    res.size.should == 4
+    res.should == [[3], [2], [1], [0]]
+
+  end
+
+  it "4 nodes with default to:" do
+
+    res = proc{ scatter [rank]*4 , from:1 }*4
+    res.size.should == 4
+    res.should == [[1], [1], [1], [1]]
+
+  end
+
+  it "4 nodes with default from:" do
+
+    res = proc{ scatter [2,1,0] , to:[1,2,3] }*4
+    res.size.should == 4
+    res.should == [[0], [2], [1], [0]]
+
+  end
+
+  it "4 nodes without defaults" do
+
+    res = proc{ scatter [rank]*3 , from:1 , to:[1,2,3] }*4
+    res.size.should == 4
+    res.should == [[0], [1], [1], [1]]
+
+  end
+
   it "8 nodes" do
 
     res = proc{
