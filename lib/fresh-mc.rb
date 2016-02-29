@@ -88,6 +88,10 @@ class Fresh < BaseFresh
     rbuf[rk..(rk+sbuf.size-1)]=[*sbuf] if commandroot.include? rank
   end
 
+  def reduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+    [*gather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
+  end
+
 # Gather from many to one.
 #
 # @param sbuf [Array] the send buffer.
