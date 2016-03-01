@@ -238,6 +238,10 @@ class Fresh < BaseFresh
     mpi_gather sbuf , rbuf , comm
   end
 
+  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+    [*allgather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
+  end
+
   def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
     sbuf = [*sbuf]
     rt   ||= to
