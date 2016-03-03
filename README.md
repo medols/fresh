@@ -51,7 +51,13 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
 ### Running the specs
 
-First, clone this repository:
+First, resolve the fresh-mc gem dependencies
+
+```shell
+    $ gem install rubinius-actor
+```
+
+Next, clone this repository:
 
 ```shell
     $ git clone https://github.com/medols/fresh.git

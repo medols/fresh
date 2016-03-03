@@ -88,6 +88,11 @@ class Fresh < BaseFresh
     rbuf[rk..(rk+sbuf.size-1)]=[*sbuf] if commandroot.include? rank
   end
 
+  def reduce_scatter op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+    res=[*gather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
+    scatter res , rbuf , to , from
+  end
+
   def reduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
     [*gather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
   end
