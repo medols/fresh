@@ -93,17 +93,21 @@ class Fresh < BaseFresh
     scatter res , rbuf , rt , comm , to:to, from:from
   end
 
-#  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-#    [*allgather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
-#  end
-
   def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    res=reduce op, sbuf , rbuf , rt , comm ,  to:to , from:from
-    bcast res , rbuf , rt , comm , to:to, from:from
+    sbuf = [*sbuf]
+    rt   ||= to
+    rt   ||= root
+    rt     = [*rt]
+    comm ||= from
+    comm ||= all
+    comm   = [*comm]
+    rbuf ||= [0]*(sbuf.size*comm.size)
+    rbuf2||= [0]*(rbuf.size/rt.size)
+    res=reduce op, sbuf , rbuf , rt.first , comm 
+    bcast res , rbuf2 , rt.first , rt 
   end
 
   def reduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    #[*gather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
     res=gather( sbuf , rbuf , rt , comm ,  to:to , from:from )
     sbuf.size.times.map{|i|
       res.values_at(*(i...res.size).step(sbuf.size).to_a).reduce(op)
