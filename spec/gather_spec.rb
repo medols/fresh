@@ -29,6 +29,14 @@ describe "gather" do
 
   end
 
+  it "4 nodes with defaults and vector send" do
+
+    res = proc{ gather [rank+9]*4 }*4
+    res.size.should == 4
+    res.should == [[9,9,9,9,10,10,10,10,11,11,11,11,12,12,12,12], [0]*16, [0]*16, [0]*16]
+
+  end
+
   it "4 nodes with default to:" do
 
     res = proc{ gather [rank+9] , from:[1,2,3] }*4

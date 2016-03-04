@@ -71,7 +71,7 @@ class Fresh < BaseFresh
     return unless commderoot.include? rank
     rcomm=[root]
     rk=comm.find_index rank
-    tbuf=[rk].concat sbuf
+    tbuf=[rk*sbuf.size].concat sbuf
     mpi_bcast tbuf , rcomm
   end
 
@@ -89,12 +89,25 @@ class Fresh < BaseFresh
   end
 
   def reduce_scatter op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    res=[*gather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
-    scatter res , rbuf , to , from
+    res=reduce op, sbuf , rbuf , rt , comm ,  to:to , from:from
+    scatter res , rbuf , rt , comm , to:to, from:from
+  end
+
+#  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#    [*allgather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
+#  end
+
+  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+    res=reduce op, sbuf , rbuf , rt , comm ,  to:to , from:from
+    bcast res , rbuf , rt , comm , to:to, from:from
   end
 
   def reduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    [*gather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
+    #[*gather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
+    res=gather( sbuf , rbuf , rt , comm ,  to:to , from:from )
+    sbuf.size.times.map{|i|
+      res.values_at(*(i...res.size).step(sbuf.size).to_a).reduce(op)
+    }
   end
 
 # Gather from many to one.
@@ -111,7 +124,7 @@ class Fresh < BaseFresh
     rt   ||= root
     comm ||= from
     comm ||= all
-    rbuf ||= [0]*comm.size
+    rbuf ||= [0]*(sbuf.size*comm.size)
     base_gather sbuf , rbuf , rt , comm
   end
 
@@ -241,10 +254,6 @@ class Fresh < BaseFresh
     rootdecomm =[*root] - [*comm]
     return unless rootdecomm.include? rank
     mpi_gather sbuf , rbuf , comm
-  end
-
-  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    [*allgather( sbuf , rbuf , rt , comm ,  to:to , from:from ).reduce(op)]
   end
 
   def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
