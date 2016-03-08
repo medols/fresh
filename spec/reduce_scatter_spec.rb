@@ -2,13 +2,13 @@ require File.expand_path('../spec_helper', __FILE__)
 
 describe "reduce_scatter" do
 
-#  it "4 nodes" do
-#
-#    res = proc{ reduce_scatter :+ , [rank+9] , [0] , 0 , [1,2,3] }*4
-#    res.size.should == 4
-#    res.should == [[33], [0], [0], [0]]
-#
-#  end
+  it "4 nodes" do
+
+    res = proc{ reduce_scatter :+ , [rank+9]*3 , [0] , 0 , [1,2,3] }*4
+    res.size.should == 4
+    res.should == [[0], [33], [33], [33]]
+
+  end
 
   it "4 nodes with tx/rx intersection" do
 

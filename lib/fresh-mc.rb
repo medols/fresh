@@ -89,8 +89,43 @@ class Fresh < BaseFresh
   end
 
   def reduce_scatter op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+    rbuf2=rbuf.dup unless rbuf.nil?
     res=reduce op, sbuf , rbuf , rt , comm ,  to:to , from:from
-    scatter res , rbuf , rt , comm , to:to, from:from
+    scatter res , rbuf2 , rt , comm , to:to, from:from
+  end
+
+  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+    sbuf = [*sbuf]
+    rt   ||= to
+    rt   ||= root
+    rt     = [*rt]
+    comm ||= from
+    comm ||= all
+    comm   = [*comm]
+    rbuf ||= [0]*(sbuf.size*comm.size)
+    rbuf2||= [0]*(rbuf.size)
+    res=gather sbuf , rbuf , rt.first , comm 
+    bcast res , rbuf2 , rt.first , rt 
+  end
+
+  def scan op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+    sbuf = [*sbuf]
+    rt   ||= to
+    rt   ||= root
+    rt     = [*rt]
+    comm ||= from
+    comm ||= all
+    comm   = [*comm]
+    rbuf ||= [0]*(sbuf.size*comm.size)
+    rbuf2||= [0]*(rbuf.size)
+    res=gather sbuf , rbuf , rt.first , comm 
+    res2=bcast res , rbuf2 , rt.first , rt
+    #res2.values_at(*0..rank).reduce(op)
+    if rt.index(rank).nil?
+      [ * res2.reduce(op) ]
+    else
+      [ * res2.values_at(*rt.values_at(*0..(rt.index(rank)))).reduce(op) ]
+    end
   end
 
   def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
@@ -260,7 +295,7 @@ class Fresh < BaseFresh
     mpi_gather sbuf , rbuf , comm
   end
 
-  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+  def allgather_old sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
     sbuf = [*sbuf]
     rt   ||= to
     rt   ||= root
