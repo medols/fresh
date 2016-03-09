@@ -51,5 +51,17 @@ describe "proc mpi api" do
     }*6).first.should == [78, 72, 130, 288, 408, 788, 542]
   end
 
+  it "values + allgather + product + gather + product " do
+    (proc{
+      val=[[4,2,3,8,4,6,1],[2,4,8,16,32,64,48]]*3
+      coef=[0,1,2,1,2,1,2,3,2,3,2,0,0]
+
+      7.times.map{|i|
+        buf = coef[2*rank,2] * allgather( [val[rank][i]] , from:[4,5] , to:[1,2,3] )
+        coef[8,3] * gather([ buf ] , from:[1,2,3])
+      }
+    }*6).first.should == [78, 72, 130, 288, 408, 788, 542]
+  end
+
 end
 

@@ -31,6 +31,20 @@
 
 require 'rubinius/actor'
 
+class Array
+
+  dot = self.instance_method(:*)
+
+  define_method(:*) do |arg|
+    if arg.is_a? Array
+      self.zip(arg).reduce(0){ |t,v| t+v.reduce(:*) }
+    else
+      dot.bind(self).call(arg)
+    end
+  end
+
+end
+
 class BaseFresh < Rubinius::Actor 
 
   attr_accessor :rank
