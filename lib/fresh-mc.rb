@@ -43,6 +43,14 @@ class Array
     end
   end
 
+  def gather *args
+    Fresh::current.gather(*([self].concat([*args])))
+  end
+
+  def allgather *args
+    Fresh::current.allgather(*([self].concat([*args])))
+  end
+
 end
 
 class BaseFresh < Rubinius::Actor 
@@ -134,7 +142,6 @@ class Fresh < BaseFresh
     rbuf2||= [0]*(rbuf.size)
     res=gather sbuf , rbuf , rt.first , comm 
     res2=bcast res , rbuf2 , rt.first , rt
-    #res2.values_at(*0..rank).reduce(op)
     if rt.index(rank).nil?
       [ * res2.reduce(op) ]
     else
