@@ -43,6 +43,10 @@ class Array
     end
   end
 
+  def bcast *args
+    Fresh::current.bcast(*([self].concat([*args])))
+  end
+
   def gather *args
     Fresh::current.gather(*([self].concat([*args])))
   end

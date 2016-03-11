@@ -95,4 +95,97 @@ describe "Broadcast with bcast" do
 
   end
 
+  it "4 nodes array method" do
+
+    res = proc{ [32].bcast [0] , 0 , [1,2,3] }*4
+    res.should == [ [0] , [32] , [32] , [32] ]
+
+  end
+
+  it "4 nodes array method with tx/rx intersection" do
+
+    res = proc{
+            [32].bcast [0] , 0 , [0,1,2,3] 
+          }*4
+
+    res.should == [ [32] , [32] , [32] , [32] ]
+
+  end
+
+  it "4 nodes array method with default from: and to:" do
+
+    res = proc{ [size-rank].bcast }*4
+    res.size.should == 4
+    res.should == [[4], [4], [4], [4]]
+
+  end
+
+  it "4 nodes array method with default to:" do
+
+    res = proc{ [size-rank].bcast from:1 }*4
+    res.size.should == 4
+    res.should == [[3], [3], [3], [3]]
+
+  end
+
+  it "4 nodes array method with default from:" do
+
+    res = proc{ [size-rank].bcast to:[1,2,3] }*4
+    res.size.should == 4
+    res.should == [[0], [4], [4], [4]]
+
+  end
+
+  it "4 nodes array method without defaults" do
+
+    res = proc{ [size-rank].bcast from:1 , to:[1,2,3] }*4
+    res.size.should == 4
+    res.should == [[0], [3], [3], [3]]
+
+  end
+
+  it "8 nodes array method" do
+
+    res = proc{
+            [64].bcast [0] , 0 , [1,2,3,4,5,6,7] 
+          }*8
+
+    res.size.should == 8
+    res.first.should == [0]
+    res[1..-1].should == [ [64] ] * 7
+
+  end
+
+  it "8 nodes array method with tx/rx intersection" do
+
+    res = proc{
+            [64].bcast [0] , 0 , [0,1,2,3,4,5,6,7] 
+          }*8
+
+    res.should == [ [64] ] * 8
+
+  end
+
+  it "100 nodes array method" do
+
+    res = proc{
+            [128].bcast [0] , 0 , 1..99 
+          }*100
+
+    res.size.should == 100 
+    res.first.should == [0]
+    res[1..-1].should == [ [128] ] * 99
+
+  end
+
+  it "100 nodes array method with tx/rx intersection" do
+
+    res = proc{
+            [128].bcast [0] , 0 , 100.times 
+          }*100
+
+    res.should == [ [128] ] * 100
+
+  end
+
 end
