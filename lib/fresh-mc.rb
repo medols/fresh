@@ -51,6 +51,10 @@ class Array
     Fresh::current.gather(*([self].concat([*args])))
   end
 
+  def scatter *args
+    Fresh::current.scatter(*([self].concat([*args])))
+  end
+
   def allgather *args
     Fresh::current.allgather(*([self].concat([*args])))
   end
