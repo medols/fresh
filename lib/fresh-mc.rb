@@ -59,6 +59,11 @@ class Array
     Fresh::current.allgather(*([self].concat([*args])))
   end
 
+  def alltoall *args
+    Fresh::current.alltoall(*([self].concat([*args])))
+  end
+
+
 end
 
 class BaseFresh < Rubinius::Actor 

@@ -42,4 +42,44 @@ describe "alltoall" do
 
   end
 
+  it "4 nodes array methods" do
+
+    res = proc{  [3,2].alltoall [0,0] , [2,3] , [0,1] }*4
+    res.size.should == 4
+    res.should == [[0,0], [0,0], [3,3], [2,2]]
+
+  end
+
+  it "4 nodes without defaults" do
+
+    res = proc{ [3,2].alltoall from:[0,1] , to:[2,3] }*4
+    res.size.should == 4
+    res.should == [[0,0], [0,0], [3,3], [2,2]]
+
+  end
+
+  it "8 nodes" do
+
+    res = proc{
+            [7,6,5,4].alltoall [0,0,0,0] , [4,5,6,7] , [0,1,2,3]
+          }*8
+
+    res.size.should == 8
+    res[0..3].should == [[0]*4]*4
+    res[4..7].should == [[7]*4, [6]*4, [5]*4, [4]*4]
+
+  end
+
+  it "100 nodes" do
+
+    res = proc{
+            (50..99).to_a.reverse.alltoall [0]*50 , 50..99 , 0..49
+          }*100
+
+    res.size.should == 100 
+    res[0..49].should == [[0]*50]*50
+    res[50..-1].should == (50..99).to_a.reverse.map{|i|[i]*50}
+
+  end
+
 end
