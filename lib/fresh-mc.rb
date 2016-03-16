@@ -63,6 +63,9 @@ class Array
     Fresh::current.alltoall(*([self].concat([*args])))
   end
 
+  def areduce *args
+    Fresh::current.reduce(*([[*args][0],self].concat([*args][1..-1])))
+  end
 
 end
 
