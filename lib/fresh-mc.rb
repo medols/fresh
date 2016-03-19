@@ -186,29 +186,27 @@ class Fresh < BaseFresh
     }
   end
 
+#  def bcast    sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def sendrecv sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def gather   sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
   def argsapi *args
     call = caller[0][/`.*'/][1..-2]
     sbuf =[*args[0]]
-    hash = (args[-1].is_a? Hash)?(args[-1]):(nil)
-    comm =  args[3]
-    rt   =  args[2]
-    rbuf = (args[1].is_a? Hash)?(nil):(args[1])
-    to   = (hash.nil?)?(nil):(hash[:to])
-    from = (hash.nil?)?(nil):(hash[:from])
-    rt   ||= to
-    rt   ||= root
-    comm ||= from
-    comm ||= case call
-               when "sendrecv" then root 
-               else all
-             end
-    rbuf ||= [0]*case call
-                   when "gather"   then sbuf.size*comm.size
-                   when "sendrecv" then sbuf.size
-                   else comm.size
-                 end
+    hash = Hash===args[-1] && args[-1]
+    rt   = args[2] || 
+           ( call[/bcast/] && hash && hash[:from]) || 
+           (!call[/bcast/] && hash && hash[:to]) || 
+#           (hash && hash[:to]) || 
+           root
+    comm = args[3] || 
+           ( call[/bcast/] && hash && hash[:to]) || 
+           (!call[/bcast/] && hash && hash[:from]) || 
+           (call[/sendrecv/] && root) || 
+           all
+    rbuf = ( !(Hash===args[1]) && args[1] ) || 
+           [0]*( 
+           (call[/sendrecv|bcast/] && sbuf.size) || 
+           (sbuf.size*comm.size) )
     #p([ sbuf , rbuf , rt , comm ])
     [ sbuf , rbuf , rt , comm ]
   end
@@ -277,14 +275,18 @@ class Fresh < BaseFresh
 # p proc{8.times.map{|i| bcast [i] , [0] , 0 , 0..3}.flatten }*4 
 #
 
-  def bcast sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    sbuf = [*sbuf]
-    rt   ||= from
-    rt   ||= root
-    comm ||= to
-    comm ||= all
-    rbuf ||= [0]*sbuf.size
-    base_bcast sbuf , rbuf , rt , comm
+#  def bcast sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#    sbuf = [*sbuf]
+#    rt   ||= from
+#    rt   ||= root
+#    comm ||= to
+#    comm ||= all
+#    rbuf ||= [0]*sbuf.size
+#    base_bcast sbuf , rbuf , rt , comm
+#  end
+
+  def bcast *args
+    base_bcast(*argsapi(*args))
   end
 
   def base_bcast sbuf , rbuf , root , comm 
