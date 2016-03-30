@@ -44,27 +44,27 @@ class Array
   end
 
   def bcast *args
-    Fresh::current.bcast(*([self].concat([*args])))
+    Fresh::current.bcast(*([self].concat(args)))
   end
 
   def gather *args
-    Fresh::current.gather(*[self].concat(args))
+    Fresh::current.gather(*([self].concat(args)))
   end
 
   def scatter *args
-    Fresh::current.scatter(*([self].concat([*args])))
+    Fresh::current.scatter(*([self].concat(args)))
   end
 
   def allgather *args
-    Fresh::current.allgather(*([self].concat([*args])))
+    Fresh::current.allgather(*([self].concat(args)))
   end
 
   def alltoall *args
-    Fresh::current.alltoall(*([self].concat([*args])))
+    Fresh::current.alltoall(*([self].concat(args)))
   end
 
   def areduce *args
-    Fresh::current.reduce(*([[*args][0],self].concat([*args][1..-1])))
+    Fresh::current.reduce(*([[*args][0],self].concat(args[1..-1])))
   end
 
 end
@@ -293,6 +293,43 @@ class Fresh < BaseFresh
     mpi_bcast_tx sbuf , rbuf , root , comm
     mpi_bcast_rx sbuf , rbuf , root , comm
     mpi_bcast_lc sbuf , rbuf , root , comm 
+    [*rbuf]
+  end
+
+  def each_slice sbuf, spos, slen
+    spos.zip(slen).map{|p,l| sbuf.new_range(p,l).map{|l| (l.nil?)?0:l}}
+  end
+
+  def mpi_scatterv_tx sbuf , scon , sdis , _rbuf , root , comm 
+    return unless [*root].include? rank
+    each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
+      tbuf=[0].concat sb
+      mpi_bcast tbuf , [cm] unless [*cm].include? rank
+    end
+  end
+
+  def mpi_scatterv_rx sbuf , rbuf , root , comm
+    commderoot =[*comm] - [*root]
+    return unless commderoot.include? rank
+    mpi_gather sbuf , rbuf , [ root ]
+  end
+
+  def mpi_scatterv_lc sbuf , scon , sdis , rbuf , root , comm
+    commandroot=[*comm] & [*root]
+    return unless commandroot.include? rank
+    each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
+      rbuf[0..-1]=[*sb]  if [*cm].include? rank
+    end
+  end
+
+  def scatterv sbuf , scon , sdis , rbuf , rt , comm
+    base_scatterv sbuf , scon , sdis , rbuf , rt , comm
+  end
+
+  def base_scatterv sbuf , scon , sdis , rbuf , root , comm 
+    mpi_scatterv_tx sbuf , scon , sdis , rbuf , root , comm
+    mpi_scatterv_rx sbuf , rbuf , root , comm
+    mpi_scatterv_lc sbuf , scon , sdis , rbuf , root , comm
     [*rbuf]
   end
 
