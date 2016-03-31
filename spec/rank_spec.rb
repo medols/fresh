@@ -10,8 +10,8 @@ describe "rank" do
     ( proc{ rank }*4 ).should == [0,1,2,3]
   end
 
-  it "100 nodes" do
-    ( proc{ rank }*100 ).should == 100.times.to_a
+  it "NS nodes" do
+    ( proc{ rank }*NS ).should == NS.times.to_a
   end
 
 end

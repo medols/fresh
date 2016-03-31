@@ -10,8 +10,8 @@ describe "all" do
     ( proc{ all }*4 ).should == [[0,1,2,3]]*4
   end
 
-  it "100 nodes" do
-    ( proc{ all }*100 ).should == [(0...100).to_a]*100 
+  it "NS nodes" do
+    ( proc{ all }*NS ).should == [(0...NS).to_a]*NS 
   end
 
 end

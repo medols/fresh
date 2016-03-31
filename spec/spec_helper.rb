@@ -8,3 +8,5 @@ require "rubygems"
 $: << 'lib'
 
 require "fresh-mc"
+
+NS=32

@@ -107,9 +107,9 @@ describe "allreduce" do
 
   end
 
-  it "100 nodes" do
+  it "NS nodes" do
 
-    dim = 100
+    dim = NS
     dim2= dim/2
     res = proc{
             val=([[]]*dim2).concat dim2.times.map{|i| ((1+(10*i))..(7+(10*i))).to_a}
@@ -124,9 +124,9 @@ describe "allreduce" do
 
   end
 
-  it "100 nodes with tx/rx intersection" do
+  it "NS nodes with tx/rx intersection" do
 
-    dim = 100
+    dim = NS
     dim2= dim/2
     res = proc{
             val=([[]]*dim2).concat dim2.times.map{|i| ((1+(10*i))..(7+(10*i))).to_a}

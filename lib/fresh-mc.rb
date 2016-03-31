@@ -67,6 +67,10 @@ class Array
     Fresh::current.reduce(*([[*args][0],self].concat(args[1..-1])))
   end
 
+  def scatterv *args
+    Fresh::current.scatterv(*([args[0],args[1],self].concat(args[2..-1])))
+  end
+
 end
 
 class BaseFresh < Rubinius::Actor 
@@ -132,19 +136,19 @@ class Fresh < BaseFresh
     scatter res , rbuf2 , rt , comm , to:to, from:from
   end
 
-  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    sbuf = [*sbuf]
-    rt   ||= to
-    rt   ||= root
-    rt     = [*rt]
-    comm ||= from
-    comm ||= all
-    comm   = [*comm]
-    rbuf ||= [0]*(sbuf.size*comm.size)
-    rbuf2||= [0]*(rbuf.size)
-    res=gather sbuf , rbuf , rt.first , comm 
-    bcast res , rbuf2 , rt.first , rt 
-  end
+#  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#    sbuf = [*sbuf]
+#    rt   ||= to
+#    rt   ||= root
+#    comm ||= from
+#    comm ||= all
+#    rbuf ||= [0]*(sbuf.size*comm.size)
+#    rt     = [*rt]
+#    comm   = [*comm]
+#    rbuf2  = [0]*(rbuf.size)
+#    res=gather sbuf , rbuf , rt.first , comm 
+#    bcast res , rbuf2 , rt.first , rt 
+#  end
 
   def scan op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
     sbuf = [*sbuf]
@@ -179,36 +183,57 @@ class Fresh < BaseFresh
     bcast res , rbuf2 , rt.first , rt 
   end
 
-  def reduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    res=gather( sbuf , rbuf , rt , comm ,  to:to , from:from )
-    sbuf.size.times.map{|i|
-      res.values_at(*(i...res.size).step(sbuf.size).to_a).reduce(op)
-    }
-  end
-
 #  def bcast    sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def sendrecv sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def gather   sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#  def scatter  sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#  def reduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#  def scatterv scon , sdis , sbuf , rbuf , rt , comm
+
   def argsapi *args
     call = caller[0][/`.*'/][1..-2]
     sbuf =[*args[0]]
     hash = Hash===args[-1] && args[-1]
     rt   = args[2] || 
-           ( call[/bcast/] && hash && hash[:from]) || 
-           (!call[/bcast/] && hash && hash[:to]) || 
-#           (hash && hash[:to]) || 
+           ( call[/bcast|scatter|scatterv/] && hash && hash[:from]) || 
+           (!call[/bcast|scatter|scatterv/] && hash && hash[:to]) || 
            root
     comm = args[3] || 
-           ( call[/bcast/] && hash && hash[:to]) || 
-           (!call[/bcast/] && hash && hash[:from]) || 
+           ( call[/bcast|scatter|scatterv/] && hash && hash[:to]) || 
+           (!call[/bcast|scatter|scatterv/] && hash && hash[:from]) || 
            (call[/sendrecv/] && root) || 
            all
     rbuf = ( !(Hash===args[1]) && args[1] ) || 
            [0]*( 
            (call[/sendrecv|bcast/] && sbuf.size) || 
+           (call[/scatter|scatterv/] && (sbuf.size/comm.size)) || 
            (sbuf.size*comm.size) )
     #p([ sbuf , rbuf , rt , comm ])
     [ sbuf , rbuf , rt , comm ]
+  end
+
+  def allgather *args
+    base_allgather(*argsapi(*args))
+  end
+
+  def base_allgather sbuf , rbuf , rt , comm 
+    rt     = [*rt]
+    comm   = [*comm]
+    rbuf2  = [0]*(rbuf.size)
+    res=gather sbuf , rbuf , rt.first , comm 
+    bcast res , rbuf2 , rt.first , rt 
+  end
+
+  def reduce *args
+    base_reduce(args[0],*argsapi(*args[1..-1]))
+  end
+
+  def base_reduce op, sbuf , rbuf , rt , comm
+    res=gather sbuf , rbuf , rt , comm
+    sbuf.size.times.map{|i|
+      res.values_at(*(i...res.size).step(sbuf.size).to_a).reduce(op)
+    }
   end
 
 # Gather from many to one.
@@ -276,14 +301,6 @@ class Fresh < BaseFresh
 #
 
 #  def bcast sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-#    sbuf = [*sbuf]
-#    rt   ||= from
-#    rt   ||= root
-#    comm ||= to
-#    comm ||= all
-#    rbuf ||= [0]*sbuf.size
-#    base_bcast sbuf , rbuf , rt , comm
-#  end
 
   def bcast *args
     base_bcast(*argsapi(*args))
@@ -300,7 +317,7 @@ class Fresh < BaseFresh
     spos.zip(slen).map{|p,l| sbuf.new_range(p,l).map{|l| (l.nil?)?0:l}}
   end
 
-  def mpi_scatterv_tx sbuf , scon , sdis , _rbuf , root , comm 
+  def mpi_scatterv_tx scon , sdis , sbuf , _rbuf , root , comm 
     return unless [*root].include? rank
     each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
       tbuf=[0].concat sb
@@ -314,7 +331,7 @@ class Fresh < BaseFresh
     mpi_gather sbuf , rbuf , [ root ]
   end
 
-  def mpi_scatterv_lc sbuf , scon , sdis , rbuf , root , comm
+  def mpi_scatterv_lc scon , sdis , sbuf , rbuf , root , comm
     commandroot=[*comm] & [*root]
     return unless commandroot.include? rank
     each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
@@ -322,14 +339,14 @@ class Fresh < BaseFresh
     end
   end
 
-  def scatterv sbuf , scon , sdis , rbuf , rt , comm
-    base_scatterv sbuf , scon , sdis , rbuf , rt , comm
+  def scatterv *args
+    base_scatterv(args[0],args[1],*argsapi(*args[2..-1]))
   end
 
-  def base_scatterv sbuf , scon , sdis , rbuf , root , comm 
-    mpi_scatterv_tx sbuf , scon , sdis , rbuf , root , comm
+  def base_scatterv scon , sdis , sbuf , rbuf , root , comm 
+    mpi_scatterv_tx scon , sdis , sbuf , rbuf , root , comm
     mpi_scatterv_rx sbuf , rbuf , root , comm
-    mpi_scatterv_lc sbuf , scon , sdis , rbuf , root , comm
+    mpi_scatterv_lc scon , sdis , sbuf , rbuf , root , comm
     [*rbuf]
   end
 
@@ -355,50 +372,14 @@ class Fresh < BaseFresh
     end
   end
 
-  def scatter sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    sbuf = [*sbuf]
-    rt   ||= from 
-    rt   ||= root
-    comm ||= to
-    comm ||= all
-    rbuf ||= [0]*(sbuf.size/comm.size)
-    base_scatter sbuf , rbuf , rt , comm
+  def scatter *args
+    base_scatter(*argsapi(*args))
   end
 
   def base_scatter sbuf , rbuf , root , comm 
     mpi_scatter_tx sbuf , rbuf , root , comm
     mpi_scatter_rx sbuf , rbuf , root , comm
     mpi_scatter_lc sbuf , rbuf , root , comm
-    [*rbuf]
-  end
-
-  def mpi_allgather_tx sbuf , _rbuf , root , comm 
-    commderoot =[*comm] - [*root]
-    return unless commderoot.include? rank
-    rnod=comm.find_index rank
-    tbuf=[rnod].concat sbuf
-    mpi_bcast tbuf , root
-  end
-
-  def mpi_allgather_rx sbuf , rbuf , root , comm
-    rootdecomm =[*root] - [*comm]
-    return unless rootdecomm.include? rank
-    mpi_gather sbuf , rbuf , comm
-  end
-
-  def allgather_old sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    sbuf = [*sbuf]
-    rt   ||= to
-    rt   ||= root
-    comm ||= from
-    comm ||= all
-    rbuf ||= [0]*comm.size
-    base_allgather sbuf , rbuf , rt , comm
-  end
-
-  def base_allgather sbuf , rbuf , root , comm 
-    mpi_allgather_tx sbuf , rbuf , root , comm
-    mpi_allgather_rx sbuf , rbuf , root , comm
     [*rbuf]
   end
 

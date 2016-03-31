@@ -10,8 +10,8 @@ describe "init" do
     ( proc{ 4 }*4 ).should == [4,4,4,4]
   end
 
-  it "100 nodes" do
-    ( proc{ 100 }*100 ).should == [100]*100
+  it "NS nodes" do
+    ( proc{ NS }*NS ).should == [NS]*NS
   end
 
 end

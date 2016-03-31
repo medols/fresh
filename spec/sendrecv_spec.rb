@@ -53,14 +53,14 @@ describe "sendrecv" do
 
   end
 
-  it "100 nodes" do
+  it "NS nodes" do
 
     res = proc{ 
-            sendrecv [rank+9] , [0] , (0..98).step(2) , (1..99).step(2)  
-          }*100 
+            sendrecv [rank+9] , [0] , (0..(NS-2)).step(2) , (1..(NS-1)).step(2)  
+          }*NS 
 
-    res.size.should == 100
-    res.should == 100.times.map{|i| (i.even?)?[i+10]:[0] }
+    res.size.should == NS
+    res.should == NS.times.map{|i| (i.even?)?[i+10]:[0] }
 
   end
 

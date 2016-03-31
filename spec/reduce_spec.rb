@@ -104,9 +104,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes" do
+  it "NS nodes" do
 
-    dim = 100
+    dim = NS
     res = proc{
             reduce :+ , [rank+9] , [0] , 0 , 1..(dim-1) 
           }*dim
@@ -117,9 +117,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes with tx/rx intersection" do
+  it "NS nodes with tx/rx intersection" do
 
-    dim = 100
+    dim = NS
     res = proc{
             reduce :+ , [rank+9] , [0]*dim , 0 , 0..(dim-1)
           }*dim
@@ -130,9 +130,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes with default from: and to:" do
+  it "NS nodes with default from: and to:" do
 
-    dim = 100
+    dim = NS
     res = proc{ reduce :+ , [rank+9] }*dim
     res.size.should == dim
     res.first.should == [ * (9..(dim+8)).to_a.reduce(:+) ]
@@ -140,9 +140,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes with default to:" do
+  it "NS nodes with default to:" do
 
-    dim = 100
+    dim = NS
     res = proc{ reduce :+ , [rank+9] , from:1..(dim-1) }*dim
     res.size.should == dim
     res.first.should == [ * (10..(dim+8)).to_a.reduce(:+) ]
@@ -252,9 +252,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes array method" do
+  it "NS nodes array method" do
 
-    dim = 100
+    dim = NS
     res = proc{
             [rank+9].areduce :+ , [0] , 0 , 1..(dim-1) 
           }*dim
@@ -265,9 +265,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes array method with tx/rx intersection" do
+  it "NS nodes array method with tx/rx intersection" do
 
-    dim = 100
+    dim = NS
     res = proc{
             [rank+9].areduce :+ , [0]*dim , 0 , 0..(dim-1)
           }*dim
@@ -278,9 +278,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes array method with default from: and to:" do
+  it "NS nodes array method with default from: and to:" do
 
-    dim = 100
+    dim = NS
     res = proc{ [rank+9].areduce :+ }*dim
     res.size.should == dim
     res.first.should == [ * (9..(dim+8)).to_a.reduce(:+) ]
@@ -288,9 +288,9 @@ describe "reduce" do
 
   end
 
-  it "100 nodes array method with default to:" do
+  it "NS nodes array method with default to:" do
 
-    dim = 100
+    dim = NS
     res = proc{ [rank+9].areduce :+ , from:1..(dim-1) }*dim
     res.size.should == dim
     res.first.should == [ * (10..(dim+8)).to_a.reduce(:+) ]

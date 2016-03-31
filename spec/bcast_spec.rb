@@ -73,25 +73,25 @@ describe "Broadcast with bcast" do
 
   end
 
-  it "100 nodes" do
+  it "NS nodes" do
 
     res = proc{
-            bcast [128] , [0] , 0 , 1..99 
-          }*100
+            bcast [128] , [0] , 0 , 1...NS
+          }*NS
 
-    res.size.should == 100 
+    res.size.should == NS
     res.first.should == [0]
-    res[1..-1].should == [ [128] ] * 99
+    res[1..-1].should == [ [128] ] * (NS-1)
 
   end
 
-  it "100 nodes with tx/rx intersection" do
+  it "NS nodes with tx/rx intersection" do
 
     res = proc{
-            bcast [128] , [0] , 0 , 100.times 
-          }*100
+            bcast [128] , [0] , 0 , NS.times 
+          }*NS
 
-    res.should == [ [128] ] * 100
+    res.should == [ [128] ] * NS
 
   end
 
@@ -166,25 +166,25 @@ describe "Broadcast with bcast" do
 
   end
 
-  it "100 nodes array method" do
+  it "NS nodes array method" do
 
     res = proc{
-            [128].bcast [0] , 0 , 1..99 
-          }*100
+            [128].bcast [0] , 0 , 1...NS
+          }*NS
 
-    res.size.should == 100 
+    res.size.should == NS
     res.first.should == [0]
-    res[1..-1].should == [ [128] ] * 99
+    res[1..-1].should == [ [128] ] * (NS-1)
 
   end
 
-  it "100 nodes array method with tx/rx intersection" do
+  it "NS nodes array method with tx/rx intersection" do
 
     res = proc{
-            [128].bcast [0] , 0 , 100.times 
-          }*100
+            [128].bcast [0] , 0 , NS.times 
+          }*NS
 
-    res.should == [ [128] ] * 100
+    res.should == [ [128] ] * NS
 
   end
 

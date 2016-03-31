@@ -74,26 +74,26 @@ describe "scatter" do
   end
 
 
-  it "100 nodes" do
+  it "NS nodes" do
 
     res = proc{
-            scatter [*(1..99)].reverse, [0] , 0 , (1..99)
-          }*100
+            scatter [*(1...NS)].reverse, [0] , 0 , (1...NS)
+          }*NS
 
-    res.size.should == 100 
+    res.size.should == NS
     res.first.should == [0] 
-    res[1..-1].should == (1..99).to_a.reverse.map{|i|[i]}
+    res[1..-1].should == (1...NS).to_a.reverse.map{|i|[i]}
 
   end
 
-  it "100 nodes with tx/rx intersection" do
+  it "NS nodes with tx/rx intersection" do
 
     res = proc{
-            scatter [*(0..99)].reverse, [0] , 0 , (0..99)
-          }*100
+            scatter [*(0...NS)].reverse, [0] , 0 , (0...NS)
+          }*NS
 
-    res.size.should == 100 
-    res.should == (0..99).to_a.reverse.map{|i|[i]}
+    res.size.should == NS 
+    res.should == (0...NS).to_a.reverse.map{|i|[i]}
 
   end
 
@@ -169,26 +169,26 @@ describe "scatter" do
   end
 
 
-  it "100 nodes array method" do
+  it "NS nodes array method" do
 
     res = proc{
-            [*(1..99)].reverse.scatter [0] , 0 , (1..99)
-          }*100
+            [*(1...NS)].reverse.scatter [0] , 0 , (1...NS)
+          }*NS
 
-    res.size.should == 100 
+    res.size.should == NS
     res.first.should == [0] 
-    res[1..-1].should == (1..99).to_a.reverse.map{|i|[i]}
+    res[1..-1].should == (1...NS).to_a.reverse.map{|i|[i]}
 
   end
 
-  it "100 nodes array method with tx/rx intersection" do
+  it "NS nodes array method with tx/rx intersection" do
 
     res = proc{
-            [*(0..99)].reverse.scatter [0] , 0 , (0..99)
-          }*100
+            [*(0...NS)].reverse.scatter [0] , 0 , (0...NS)
+          }*NS
 
-    res.size.should == 100 
-    res.should == (0..99).to_a.reverse.map{|i|[i]}
+    res.size.should == NS
+    res.should == (0...NS).to_a.reverse.map{|i|[i]}
 
   end
 

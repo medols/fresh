@@ -10,8 +10,8 @@ describe "root" do
     ( proc{ root }*4 ).should == [0]*4
   end
 
-  it "100 nodes" do
-    ( proc{ root }*100 ).should == [0]*100 
+  it "NS nodes" do
+    ( proc{ root }*NS ).should == [0]*NS
   end
 
 end

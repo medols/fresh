@@ -10,8 +10,8 @@ describe "size" do
     ( proc{ size }*4 ).should == [4,4,4,4]
   end
 
-  it "100 nodes" do
-    ( proc{ size }*100 ).should == [100]*100
+  it "NS nodes" do
+    ( proc{ size }*NS ).should == [NS]*NS
   end
 
 end

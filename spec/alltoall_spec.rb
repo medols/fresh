@@ -30,15 +30,15 @@ describe "alltoall" do
 
   end
 
-  it "100 nodes" do
+  it "NS nodes" do
 
     res = proc{
-            alltoall (50..99).to_a.reverse, [0]*50 , 50..99 , 0..49
-          }*100
+            alltoall ((NS/2)...NS).to_a.reverse, [0]*(NS/2) , (NS/2)...NS , 0...(NS/2)
+          }*NS
 
-    res.size.should == 100 
-    res[0..49].should == [[0]*50]*50
-    res[50..-1].should == (50..99).to_a.reverse.map{|i|[i]*50}
+    res.size.should == NS
+    res[0...(NS/2)].should == [[0]*(NS/2)]*(NS/2)
+    res[(NS/2)..-1].should == ((NS/2)...NS).to_a.reverse.map{|i|[i]*(NS/2)}
 
   end
 
@@ -70,15 +70,15 @@ describe "alltoall" do
 
   end
 
-  it "100 nodes" do
+  it "NS nodes" do
 
     res = proc{
-            (50..99).to_a.reverse.alltoall [0]*50 , 50..99 , 0..49
-          }*100
+            ((NS/2)...NS).to_a.reverse.alltoall [0]*(NS/2) , (NS/2)...NS , 0...(NS/2)
+          }*NS
 
-    res.size.should == 100 
-    res[0..49].should == [[0]*50]*50
-    res[50..-1].should == (50..99).to_a.reverse.map{|i|[i]*50}
+    res.size.should == NS
+    res[0...(NS/2)].should == [[0]*(NS/2)]*(NS/2)
+    res[(NS/2)..-1].should == ((NS/2)...NS).to_a.reverse.map{|i|[i]*(NS/2)}
 
   end
 

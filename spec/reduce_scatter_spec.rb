@@ -103,9 +103,9 @@ describe "reduce_scatter" do
 #
 #  end
 
-#  it "100 nodes" do
+#  it "NS nodes" do
 #
-#    dim = 100
+#    dim = NS
 #    res = proc{
 #            reduce_scatter :+ , [rank+9] , [0] , 0 , 1..(dim-1) 
 #          }*dim
@@ -116,9 +116,9 @@ describe "reduce_scatter" do
 #
 #  end
 
-  it "100 nodes with tx/rx intersection" do
+  it "NS nodes with tx/rx intersection" do
 
-    dim = 100
+    dim = NS
     res = proc{
             reduce_scatter :+ , [rank+9]*dim , [0] , 0 , 0...dim
           }*dim
@@ -128,18 +128,18 @@ describe "reduce_scatter" do
 
   end
 
-  it "100 nodes with default from: and to:" do
+  it "NS nodes with default from: and to:" do
 
-    dim = 100
+    dim = NS
     res = proc{ reduce_scatter :+ , [rank+9]*dim }*dim
     res.size.should == dim
     res.should == [ [ * (9..(dim+8)).to_a.reduce(:+) ] ]*dim
 
   end
 
-#  it "100 nodes with default to:" do
+#  it "NS nodes with default to:" do
 #
-#    dim = 100
+#    dim = NS
 #    res = proc{ reduce_scatter :+ , [rank+9] , from:1..(dim-1) }*dim
 #    res.size.should == dim
 #    res.first.should == [ * (10..(dim+8)).to_a.reduce_scatter(:+) ]
