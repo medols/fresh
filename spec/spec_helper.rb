@@ -9,4 +9,5 @@ $: << 'lib'
 
 require "fresh-mc"
 
-NS=32
+#NS=32
+NS=512

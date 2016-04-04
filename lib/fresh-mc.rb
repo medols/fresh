@@ -136,39 +136,6 @@ class Fresh < BaseFresh
     scatter res , rbuf2 , rt , comm , to:to, from:from
   end
 
-#  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-#    sbuf = [*sbuf]
-#    rt   ||= to
-#    rt   ||= root
-#    comm ||= from
-#    comm ||= all
-#    rbuf ||= [0]*(sbuf.size*comm.size)
-#    rt     = [*rt]
-#    comm   = [*comm]
-#    rbuf2  = [0]*(rbuf.size)
-#    res=gather sbuf , rbuf , rt.first , comm 
-#    bcast res , rbuf2 , rt.first , rt 
-#  end
-
-  def scan op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    sbuf = [*sbuf]
-    rt   ||= to
-    rt   ||= root
-    rt     = [*rt]
-    comm ||= from
-    comm ||= all
-    comm   = [*comm]
-    rbuf ||= [0]*(sbuf.size*comm.size)
-    rbuf2||= [0]*(rbuf.size)
-    res=gather sbuf , rbuf , rt.first , comm 
-    res2=bcast res , rbuf2 , rt.first , rt
-    if rt.index(rank).nil?
-      [ * res2.reduce(op) ]
-    else
-      [ * res2.values_at(*rt.values_at(*0..(rt.index(rank)))).reduce(op) ]
-    end
-  end
-
   def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
     sbuf = [*sbuf]
     rt   ||= to
@@ -188,6 +155,7 @@ class Fresh < BaseFresh
 #  def gather   sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def scatter  sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def reduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#  def scan op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def scatterv scon , sdis , sbuf , rbuf , rt , comm
 
@@ -211,6 +179,23 @@ class Fresh < BaseFresh
            (sbuf.size*comm.size) )
     #p([ sbuf , rbuf , rt , comm ])
     [ sbuf , rbuf , rt , comm ]
+  end
+
+  def scan *args
+    base_scan(args[0],*argsapi(*args[1..-1]))
+  end
+
+  def base_scan op, sbuf , rbuf , rt , comm
+    rt     = [*rt]
+    comm   = [*comm]
+    rbuf2  = [0]*(rbuf.size)
+    res=gather sbuf , rbuf , rt.first , comm 
+    res2=bcast res , rbuf2 , rt.first , rt
+    if rt.index(rank).nil?
+      [ * res2.reduce(op) ]
+    else
+      [ * res2.values_at(*rt.values_at(*0..(rt.index(rank)))).reduce(op) ]
+    end
   end
 
   def allgather *args
@@ -314,10 +299,10 @@ class Fresh < BaseFresh
   end
 
   def each_slice sbuf, spos, slen
-    spos.zip(slen).map{|p,l| sbuf.new_range(p,l).map{|l| (l.nil?)?0:l}}
+    spos.zip(slen).map{|p,l| sbuf.new_range(p,l).map{|m|m||0}}
   end
 
-  def mpi_scatterv_tx scon , sdis , sbuf , _rbuf , root , comm 
+  def mpi_scatterv_tx scon , sdis , sbuf , root , comm 
     return unless [*root].include? rank
     each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
       tbuf=[0].concat sb
@@ -344,7 +329,7 @@ class Fresh < BaseFresh
   end
 
   def base_scatterv scon , sdis , sbuf , rbuf , root , comm 
-    mpi_scatterv_tx scon , sdis , sbuf , rbuf , root , comm
+    mpi_scatterv_tx scon , sdis , sbuf , root , comm
     mpi_scatterv_rx sbuf , rbuf , root , comm
     mpi_scatterv_lc scon , sdis , sbuf , rbuf , root , comm
     [*rbuf]
