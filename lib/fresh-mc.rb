@@ -68,7 +68,7 @@ class Array
   end
 
   def scatterv *args
-    Fresh::current.scatterv(*([args[0],args[1],self].concat(args[2..-1])))
+    Fresh::current.scatterv(*([[*args][0],[*args][1],self].concat(args[2..-1])))
   end
 
 end
@@ -328,7 +328,8 @@ class Fresh < BaseFresh
     base_scatterv(args[0],args[1],*argsapi(*args[2..-1]))
   end
 
-  def base_scatterv scon , sdis , sbuf , rbuf , root , comm 
+  def base_scatterv scon , sdis , sbuf , rbuf , root , comm
+    rbuf=[0]*scon[rank] 
     mpi_scatterv_tx scon , sdis , sbuf , root , comm
     mpi_scatterv_rx sbuf , rbuf , root , comm
     mpi_scatterv_lc scon , sdis , sbuf , rbuf , root , comm

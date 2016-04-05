@@ -20,4 +20,10 @@ describe "scatterv" do
     res.should == [[3, 2], [2, 1], [1, 0], [1]]
   end
 
+  it "4 nodes array method with defaults extended" do
+    res = proc{ [3,2,1,0,[0]*8].flatten.scatterv [2,2,2,1] , [0,1,2,2] }*4
+    res.size.should == 4
+    res.should == [[3, 2], [2, 1], [1, 0], [1]]
+  end
+
 end
