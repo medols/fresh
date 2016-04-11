@@ -36,11 +36,9 @@ class Array
   dot = self.instance_method(:*)
 
   define_method(:*) do |arg|
-    if arg.is_a? Array
-      self.zip(arg).reduce(0){ |t,v| t+v.reduce(:*) }
-    else
-      dot.bind(self).call(arg)
-    end
+#    return self.zip(arg).reduce(0){ |t,v| t+v.reduce(:*) } if arg.is_a? Array
+    return self.zip(arg).map{|a,b|a*b}.reduce(:+) if arg.is_a? Array
+    dot.bind(self).call(arg)
   end
 
   def bcast *args
@@ -86,69 +84,146 @@ class BaseFresh < Rubinius::Actor
     (0...size).to_a
   end
 
-end
-
-class Fresh < BaseFresh 
-
   def linked
     @links
   end
 
-  def mpi_gather sbuf , rbuf, comm
+#  def mpi_bcast sbuf , comm 
+  def base_tx sbuf , comm 
+    comm.each{ |s| @@visor.linked[s] << sbuf }
+    comm.each{ Rubinius::Actor.receive{|f| f.when(:ack){|m| m} } }
+  end
+
+#  def mpi_gather _sbuf , rbuf, comm
+  def base_rx rbuf, comm
     comm.each{
-      sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
-      rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
+#      sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
+#      rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
+      tbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
+      rbuf[tbuf[0]..(tbuf[0]+tbuf[1..-1].size-1)]=tbuf[1..-1]
     }
     comm.each{ |s| @@visor.linked[s] << :ack }
     rbuf=rbuf.flatten
   end
 
-  def mpi_bcast buf , comm 
-    comm.each{ |s| @@visor.linked[s] << buf }
-    comm.each{ Rubinius::Actor.receive{|f| f.when(:ack){|m| m} } }
+  class << self
+
+    @@size= 0
+    @@nodes = []
+    @@nodes_run = []
+    @@ret = []
+    @@exc = []
+    @@work_end = false
+    @@last_end = false
+    @@visor = nil
+
+    @@Do_work = proc{ |work| 
+      @@nodes.pop << work 
+      @@nodes_run.each{|n| n<<1} if @@nodes.empty? # synchronous start
+    }
+
+    @@Do_stop = proc{ @@work_end = true }
+
+    @@Do_ready= 
+      proc do |who|
+        @@nodes<<who.this
+        if @@work_end and @@nodes.size==@@size
+          @@nodes.each{ |rw| rw << Stop[:now] }
+          @@last_end=true
+          @@main<<1 # synchronous end
+        end
+      end
+
+    @@Do_excp = 
+      proc do |ex|
+        unless ex.reason.nil?
+          node = ex.actor
+          warn "\nNode #{node.rank}/#{node.size} exit:\n#{ex.reason.backtrace.inspect}"
+          @@exc[ex.actor.rank]<<ex
+        end
+      end
+
+    @@Do_filter = 
+      proc do |f|
+        f.when Work , & @@Do_work 
+        f.when Ready, & @@Do_ready
+        f.when Stop , & @@Do_stop
+        f.when Rubinius::Actor::DeadActorError, & @@Do_excp
+      end 
+ 
+    def do_loop
+      proc do |rk|
+        current.rank=rk
+        current.size=@@size
+        work = Rubinius::Actor.receive
+        Rubinius::Actor.receive
+        #wait_size @@size 
+        #sleep 0.1
+        @@ret[rk]=current.instance_exec( &work.msg )
+        @@visor << Ready[current]
+        Rubinius::Actor.receive
+      end
+    end
+
+    def start mproc, mult 
+      init mult
+      mult.times{ 
+        @@visor << Work[mproc]
+      }
+      finalize
+    end
+
+    def wait_size size
+      sleep 0.01 until @@visor.linked.size==size
+      sleep 0.01
+    end
+
+    def init_manager freshsize 
+      @@size= freshsize
+      @@ret = [nil]*@@size
+      @@exc = Array.new(@@size+1){[]}
+    end
+
+    def init freshsize
+      init_manager freshsize
+      @@main  = current
+      #@@visor = spawn(current) do |main|
+      @@visor = spawn do 
+        Rubinius::Actor.trap_exit = true
+        @@size.times{|i| spawn_link(i,&do_loop) }
+        @@nodes.concat current.linked.dup
+        @@nodes_run.concat current.linked.dup
+        #main << Ready[current]
+        @@main << Ready[current]
+        Rubinius::Actor.receive(&@@Do_filter) until false
+      end
+      #wait_size freshsize
+      Rubinius::Actor.receive
+    end
+
+    def multinode 
+      log = "Fresh raised #{@@exc.flatten.size} exceptions:\n"
+      log += @@exc.flatten.map{|ex| 
+        "Node #{ex.actor.rank}/#{ex.actor.size} exit: #{ex.reason.backtrace.inspect}"
+      }.join("\n")
+      MultiNodeError.new(@@exc,log)
+    end
+
+    def finalize
+      @@visor<<Stop[:now]
+      Rubinius::Actor.receive
+      #wait_size 0
+      @@nodes=[]
+      @@nodes_run=[]
+      raise multinode unless @@exc.flatten.empty?
+      @@ret
+    end
+
   end
 
-  def mpi_gather_tx sbuf , _rbuf , root , comm 
-    commderoot = [*comm] - [*root]
-    return unless commderoot.include? rank
-    rcomm=[root]
-    rk=comm.find_index rank
-    tbuf=[rk*sbuf.size].concat sbuf
-    mpi_bcast tbuf , rcomm
-  end
+end
 
-  def mpi_gather_rx sbuf , rbuf , root , comm 
-    return unless [*root].include? rank
-    comm = [*comm] - [*root]
-    mpi_gather sbuf , rbuf , comm
-  end
-
-  def mpi_gather_lc sbuf , rbuf , root , comm
-    commandroot= [*comm] & [*root]
-    return unless commandroot.include? rank
-    rk=comm.find_index(rank)
-    rbuf[rk..(rk+sbuf.size-1)]=[*sbuf] if commandroot.include? rank
-  end
-
-  def reduce_scatter op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    rbuf2=rbuf.dup unless rbuf.nil?
-    res=reduce op, sbuf , rbuf , rt , comm ,  to:to , from:from
-    scatter res , rbuf2 , rt , comm , to:to, from:from
-  end
-
-  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    sbuf = [*sbuf]
-    rt   ||= to
-    rt   ||= root
-    rt     = [*rt]
-    comm ||= from
-    comm ||= all
-    comm   = [*comm]
-    rbuf ||= [0]*(sbuf.size*comm.size)
-    rbuf2||= [0]*(rbuf.size/rt.size)
-    res=reduce op, sbuf , rbuf , rt.first , comm 
-    bcast res , rbuf2 , rt.first , rt 
-  end
+class Fresh < BaseFresh 
 
 #  def bcast    sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def sendrecv sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
@@ -158,6 +233,8 @@ class Fresh < BaseFresh
 #  def scan op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def allgather sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def scatterv scon , sdis , sbuf , rbuf , rt , comm
+#  def alltoall sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 
   def argsapi *args
     call = caller[0][/`.*'/][1..-2]
@@ -170,15 +247,77 @@ class Fresh < BaseFresh
     comm = args[3] || 
            ( call[/bcast|scatter|scatterv/] && hash && hash[:to]) || 
            (!call[/bcast|scatter|scatterv/] && hash && hash[:from]) || 
-           (call[/sendrecv/] && root) || 
+           ( call[/sendrecv/] && root) || 
            all
     rbuf = ( !(Hash===args[1]) && args[1] ) || 
            [0]*( 
+           (call[/alltoall/] && comm.size) || 
            (call[/sendrecv|bcast/] && sbuf.size) || 
            (call[/scatter|scatterv/] && (sbuf.size/comm.size)) || 
            (sbuf.size*comm.size) )
     #p([ sbuf , rbuf , rt , comm ])
     [ sbuf , rbuf , rt , comm ]
+  end
+ 
+#  def linked
+#    @links
+#  end
+
+#  def mpi_gather sbuf , rbuf, comm
+#    comm.each{
+#      sbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
+#      rbuf[sbuf[0]..(sbuf[0]+sbuf[1..-1].size-1)]=sbuf[1..-1]
+#    }
+#    comm.each{ |s| @@visor.linked[s] << :ack }
+#    rbuf=rbuf.flatten
+#  end
+
+#  def mpi_bcast buf , comm 
+#    comm.each{ |s| @@visor.linked[s] << buf }
+#    comm.each{ Rubinius::Actor.receive{|f| f.when(:ack){|m| m} } }
+#  end
+
+# Gather from many to one.
+#
+# @param sbuf [Array] the send buffer.
+# @param rbuf [Array] the receiver buffer.
+# @param root [Fixnum] the node that receives all data.
+# @param comm [Array] the nodes that have data to send.
+# @return [Array] the receiver buffer with the gathered data.
+
+  def gather *args
+    base_gather(*argsapi(*args))
+  end
+
+  def base_gather sbuf , rbuf , root , comm
+    gather_tx sbuf , rbuf , root , comm
+    gather_rx sbuf , rbuf , root , comm
+    gather_lc sbuf , rbuf , root , comm 
+    [*rbuf]
+  end
+
+  def gather_tx sbuf , _rbuf , root , comm 
+    commderoot = [*comm] - [*root]
+    return unless commderoot.include? rank
+    rcomm=[root]
+    rk=comm.find_index rank
+    tbuf=[rk*sbuf.size].concat sbuf
+#    mpi_bcast tbuf , rcomm
+    base_tx tbuf , rcomm
+  end
+
+  def gather_rx sbuf , rbuf , root , comm 
+    return unless [*root].include? rank
+    comm = [*comm] - [*root]
+#    mpi_gather sbuf , rbuf , comm
+    base_rx rbuf , comm
+  end
+
+  def gather_lc sbuf , rbuf , root , comm
+    commandroot= [*comm] & [*root]
+    return unless commandroot.include? rank
+    rk=comm.find_index(rank)
+    rbuf[rk..(rk+sbuf.size-1)]=[*sbuf] if commandroot.include? rank
   end
 
   def scan *args
@@ -221,24 +360,58 @@ class Fresh < BaseFresh
     }
   end
 
-# Gather from many to one.
-#
-# @param sbuf [Array] the send buffer.
-# @param rbuf [Array] the receiver buffer.
-# @param root [Fixnum] the node that receives all data.
-# @param comm [Array] the nodes that have data to send.
-# @return [Array] the receiver buffer with the gathered data.
-
-  def gather *args
-    base_gather(*argsapi(*args))
+  def reduce_scatter *args
+    base_reduce_scatter(args[0],*argsapi(*args[1..-1]))
   end
 
-  def base_gather sbuf , rbuf , root , comm
-    mpi_gather_tx sbuf , rbuf , root , comm
-    mpi_gather_rx sbuf , rbuf , root , comm
-    mpi_gather_lc sbuf , rbuf , root , comm 
-    [*rbuf]
+  def base_reduce_scatter op, sbuf , rbuf , rt , comm
+    rbuf2=rbuf.dup unless rbuf.nil?
+    res=reduce op, sbuf , rbuf , rt , comm 
+    scatter res , rbuf2 , rt , comm 
   end
+
+  def allreduce *args 
+    base_allreduce(args[0],*argsapi(*args[1..-1]))
+  end
+
+  def base_allreduce op, sbuf , rbuf , rt , comm
+#    sbuf = [*sbuf]
+#    rt   ||= to
+#    rt   ||= root
+#    rt     = [*rt]
+#    comm ||= from
+#    comm ||= all
+#    comm   = [*comm]
+#    rbuf ||= [0]*(sbuf.size*comm.size)
+#    rbuf2||= [0]*(rbuf.size/rt.size)
+
+    rt     = [*rt]
+    comm   = [*comm]
+    rbuf2  = [0]*(rbuf.size/rt.size)
+
+    res=reduce op, sbuf , rbuf , rt.first , comm 
+    bcast res , rbuf2 , rt.first , rt 
+  end
+
+#  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#    sbuf = [*sbuf]
+#    rt   ||= to
+#    rt   ||= root
+#    rt     = [*rt]
+#    comm ||= from
+#    comm ||= all
+#    comm   = [*comm]
+#    rbuf ||= [0]*(sbuf.size*comm.size)
+#    rbuf2||= [0]*(rbuf.size/rt.size)
+#    res=reduce op, sbuf , rbuf , rt.first , comm 
+#    bcast res , rbuf2 , rt.first , rt 
+#  end
+
+#  def reduce_scatter op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#    rbuf2=rbuf.dup unless rbuf.nil?
+#    res=reduce op, sbuf , rbuf , rt , comm ,  to:to , from:from
+#    scatter res , rbuf2 , rt , comm , to:to, from:from
+#  end
 
   def sendrecv *args
     base_sendrecv(*argsapi(*args))
@@ -249,28 +422,9 @@ class Fresh < BaseFresh
     comm = [*comm]
     commderoot = comm - root
     rootdecomm = root - comm
-    mpi_gather_tx sbuf , rbuf , root [ comm.find_index rank ] , [ rank ] if commderoot.include? rank
-    mpi_gather_rx sbuf , rbuf , root , [ comm[root.find_index rank] ] if rootdecomm.include? rank
+    gather_tx sbuf , rbuf , root [ comm.find_index rank ] , [ rank ] if commderoot.include? rank
+    gather_rx sbuf , rbuf , root , [ comm[root.find_index rank] ] if rootdecomm.include? rank
     [*rbuf]
-  end
-
-  def mpi_bcast_tx sbuf , _rbuf , root , comm
-    commderoot =[*comm] - [*root]
-    return unless [*root].include? rank
-    tbuf=[0].concat sbuf
-    mpi_bcast tbuf , commderoot 
-  end
-
-  def mpi_bcast_rx sbuf , rbuf , root , comm
-    commderoot =[*comm] - [*root]
-    return unless commderoot.include? rank
-    mpi_gather sbuf , rbuf , [ root ]
-  end
-
-  def mpi_bcast_lc sbuf , rbuf , root , comm
-    commandroot=[*comm] & [*root]
-    return unless commandroot.include? rank
-    rbuf[0..-1]=[*sbuf]
   end
 
 # Broadcast  a copy of the send buffer +sbuf+ from +root+ to the receive buffer +rbuf+ of all nodes in the receiver array +comm+
@@ -292,36 +446,36 @@ class Fresh < BaseFresh
   end
 
   def base_bcast sbuf , rbuf , root , comm 
-    mpi_bcast_tx sbuf , rbuf , root , comm
-    mpi_bcast_rx sbuf , rbuf , root , comm
-    mpi_bcast_lc sbuf , rbuf , root , comm 
+    bcast_tx sbuf , rbuf , root , comm
+    bcast_rx sbuf , rbuf , root , comm
+    bcast_lc sbuf , rbuf , root , comm 
     [*rbuf]
   end
 
-  def each_slice sbuf, spos, slen
-    spos.zip(slen).map{|p,l| sbuf.new_range(p,l).map{|m|m||0}}
-  end
-
-  def mpi_scatterv_tx scon , sdis , sbuf , root , comm 
+  def bcast_tx sbuf , _rbuf , root , comm
+    commderoot =[*comm] - [*root]
     return unless [*root].include? rank
-    each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
-      tbuf=[0].concat sb
-      mpi_bcast tbuf , [cm] unless [*cm].include? rank
-    end
+    tbuf=[0].concat sbuf
+#    mpi_bcast tbuf , commderoot 
+    base_tx tbuf , commderoot 
   end
 
-  def mpi_scatterv_rx sbuf , rbuf , root , comm
+  def bcast_rx sbuf , rbuf , root , comm
     commderoot =[*comm] - [*root]
     return unless commderoot.include? rank
-    mpi_gather sbuf , rbuf , [ root ]
+#    mpi_gather sbuf , rbuf , [ root ]
+    base_rx rbuf , [ root ]
   end
 
-  def mpi_scatterv_lc scon , sdis , sbuf , rbuf , root , comm
+  def bcast_lc sbuf , rbuf , root , comm
     commandroot=[*comm] & [*root]
     return unless commandroot.include? rank
-    each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
-      rbuf[0..-1]=[*sb]  if [*cm].include? rank
-    end
+    rbuf[0..-1]=[*sbuf]
+  end
+
+  def each_slice sbuf, spos, slen
+    #spos.zip(slen).map{|p,l| sbuf.new_rangex(p,l).map{|m|m||0}}
+    spos.zip(slen).map{|p,l| sbuf.new_range(p,l).map{|m|m||0}}
   end
 
   def scatterv *args
@@ -330,30 +484,32 @@ class Fresh < BaseFresh
 
   def base_scatterv scon , sdis , sbuf , rbuf , root , comm
     rbuf=[0]*scon[rank] 
-    mpi_scatterv_tx scon , sdis , sbuf , root , comm
-    mpi_scatterv_rx sbuf , rbuf , root , comm
-    mpi_scatterv_lc scon , sdis , sbuf , rbuf , root , comm
+    scatterv_tx scon , sdis , sbuf , root , comm
+    scatterv_rx sbuf , rbuf , root , comm
+    scatterv_lc scon , sdis , sbuf , rbuf , root , comm
     [*rbuf]
   end
 
-  def mpi_scatter_tx sbuf , _rbuf , root , comm 
+  def scatterv_tx scon , sdis , sbuf , root , comm 
     return unless [*root].include? rank
-    sbuf.each_slice(sbuf.size/comm.size).zip(comm) do |sb,cm|
+    each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
       tbuf=[0].concat sb
-      mpi_bcast tbuf , [cm] unless [*cm].include? rank
+#      mpi_bcast tbuf , [cm] unless [*cm].include? rank
+      base_tx tbuf , [cm] unless [*cm].include? rank
     end
   end
 
-  def mpi_scatter_rx sbuf , rbuf , root , comm
+  def scatterv_rx sbuf , rbuf , root , comm
     commderoot =[*comm] - [*root]
     return unless commderoot.include? rank
-    mpi_gather sbuf , rbuf , [ root ]
+#    mpi_gather sbuf , rbuf , [ root ]
+    base_rx rbuf , [ root ]
   end
 
-  def mpi_scatter_lc sbuf , rbuf , root , comm
+  def scatterv_lc scon , sdis , sbuf , rbuf , root , comm
     commandroot=[*comm] & [*root]
     return unless commandroot.include? rank
-    sbuf.each_slice(sbuf.size/comm.size).zip(comm) do |sb,cm|
+    each_slice(sbuf,sdis,scon).zip(comm) do |sb,cm|
       rbuf[0..-1]=[*sb]  if [*cm].include? rank
     end
   end
@@ -363,134 +519,70 @@ class Fresh < BaseFresh
   end
 
   def base_scatter sbuf , rbuf , root , comm 
-    mpi_scatter_tx sbuf , rbuf , root , comm
-    mpi_scatter_rx sbuf , rbuf , root , comm
-    mpi_scatter_lc sbuf , rbuf , root , comm
+    scatter_tx sbuf , rbuf , root , comm
+    scatter_rx sbuf , rbuf , root , comm
+    scatter_lc sbuf , rbuf , root , comm
     [*rbuf]
   end
 
-  def mpi_alltoall_tx sbuf , _rbuf , root , comm 
+  def scatter_tx sbuf , _rbuf , root , comm 
+    return unless [*root].include? rank
+    sbuf.each_slice(sbuf.size/comm.size).zip(comm) do |sb,cm|
+      tbuf=[0].concat sb
+#      mpi_bcast tbuf , [cm] unless [*cm].include? rank
+      base_tx tbuf , [cm] unless [*cm].include? rank
+    end
+  end
+
+  def scatter_rx sbuf , rbuf , root , comm
+    commderoot =[*comm] - [*root]
+    return unless commderoot.include? rank
+#    mpi_gather sbuf , rbuf , [ root ]
+    base_rx rbuf , [ root ]
+  end
+
+  def scatter_lc sbuf , rbuf , root , comm
+    commandroot=[*comm] & [*root]
+    return unless commandroot.include? rank
+    sbuf.each_slice(sbuf.size/comm.size).zip(comm) do |sb,cm|
+      rbuf[0..-1]=[*sb]  if [*cm].include? rank
+    end
+  end
+
+#  def alltoall sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+#    sbuf = [*sbuf]
+#    rt   ||= to
+#    rt   ||= root
+#    comm ||= from
+#    comm ||= all
+#    rbuf ||= [0]*comm.size
+#    base_alltoall sbuf , rbuf , rt , comm
+#  end
+
+  def alltoall *args
+    base_alltoall(*argsapi(*args))
+  end
+
+  def base_alltoall sbuf , rbuf , root , comm 
+    alltoall_tx sbuf , rbuf , root , comm
+    alltoall_rx sbuf , rbuf , root , comm
+    rbuf
+  end
+
+  def alltoall_tx sbuf , _rbuf , root , comm 
     return unless comm.include? rank
     sbuf.each_slice(sbuf.size/root.size).zip(root) do |sb,cm|
       rnod=comm.find_index rank
       tbuf=[rnod].concat sb
-      mpi_bcast tbuf , [cm]
+#      mpi_bcast tbuf , [cm]
+      base_tx tbuf , [cm]
     end
   end
 
-  def mpi_alltoall_rx sbuf , rbuf , root , comm 
+  def alltoall_rx sbuf , rbuf , root , comm 
     return unless root.include? rank
-    mpi_gather sbuf , rbuf , comm
-  end
-
-  def alltoall sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
-    sbuf = [*sbuf]
-    rt   ||= to
-    rt   ||= root
-    comm ||= from
-    comm ||= all
-    rbuf ||= [0]*comm.size
-    base_alltoall sbuf , rbuf , rt , comm
-  end
-
-  def base_alltoall sbuf , rbuf , root , comm 
-    mpi_alltoall_tx sbuf , rbuf , root , comm
-    mpi_alltoall_rx sbuf , rbuf , root , comm
-    rbuf
-  end
-
-  class << self
-
-    @@size= 0
-    @@nodes = []
-    @@ret = []
-    @@exc = []
-    @@work_end = false
-    @@visor = nil
-
-    @@Do_work = proc{ |work| @@nodes.pop << work }
-
-    @@Do_stop = proc{ @@work_end = true }
-
-    @@Do_ready= 
-      proc do |who|
-        @@nodes<<who.this
-        @@nodes.each{ |rw| rw << Stop[:now] } if @@work_end and @@nodes.size==@@size
-      end
-
-    @@Do_excp = 
-      proc do |ex|
-        unless ex.reason.nil?
-          node = ex.actor
-          warn "\nNode #{node.rank}/#{node.size} exit:\n#{ex.reason.backtrace.inspect}"
-          @@exc[ex.actor.rank]<<ex
-        end
-      end
-
-    @@Do_filter = 
-      proc do |f|
-        f.when Work , & @@Do_work 
-        f.when Ready, & @@Do_ready
-        f.when Stop , & @@Do_stop
-        f.when Rubinius::Actor::DeadActorError, & @@Do_excp
-      end 
- 
-    def do_loop
-      proc do |rk|
-        current.rank=rk
-        current.size=@@size
-        work = Rubinius::Actor.receive
-        sleep 0.1
-        @@ret[rk]=current.instance_exec( &work.msg )
-        @@visor << Ready[current]
-        Rubinius::Actor.receive
-      end
-    end
-
-    def start mproc, mult 
-      init mult
-      mult.times{ @@visor << Work[mproc] }
-      finalize
-    end
-
-    def wait_size freshsize
-        sleep 0.01 until @@visor.linked.size==freshsize
-        sleep 0.1
-    end
-
-    def init_manager freshsize 
-      @@size= freshsize
-      @@ret = [nil]*@@size
-      @@exc = Array.new(@@size+1){[]}
-    end
-
-    def init freshsize
-      init_manager freshsize
-      @@visor = spawn do 
-        Rubinius::Actor.trap_exit = true
-        @@size.times{|i| spawn_link(i,&do_loop) }
-        @@nodes.concat current.linked.dup
-        loop { Rubinius::Actor.receive(&@@Do_filter) }
-      end
-      wait_size freshsize
-    end
-
-    def multinode 
-      log = "Fresh raised #{@@exc.flatten.size} exceptions:\n"
-      log += @@exc.flatten.map{|ex| 
-        "Node #{ex.actor.rank}/#{ex.actor.size} exit: #{ex.reason.backtrace.inspect}"
-      }.join("\n")
-      MultiNodeError.new(@@exc,log)
-    end
-
-    def finalize
-      @@visor<<Stop[:now]
-      wait_size 0
-      @@nodes=[]
-      raise multinode unless @@exc.flatten.empty?
-      @@ret
-    end
-
+#    mpi_gather sbuf , rbuf , comm
+    base_rx rbuf , comm
   end
 
 end
