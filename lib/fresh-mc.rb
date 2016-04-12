@@ -74,7 +74,11 @@ end
 class BaseFresh < Rubinius::Actor 
 
   attr_accessor :rank
-  attr_accessor :size
+#  attr_accessor :size
+
+  def size
+    @@size
+  end
 
   def root
     0
@@ -90,7 +94,7 @@ class BaseFresh < Rubinius::Actor
 
 #  def mpi_bcast sbuf , comm 
   def base_tx sbuf , comm 
-    comm.each{ |s| @@visor.linked[s] << sbuf }
+    comm.each{ |s| @@visorlinked[s] << sbuf }
     comm.each{ Rubinius::Actor.receive{|f| f.when(:ack){|m| m} } }
   end
 
@@ -102,7 +106,7 @@ class BaseFresh < Rubinius::Actor
       tbuf=Rubinius::Actor.receive{|f| f.when(Array){|m| m} }
       rbuf[tbuf[0]..(tbuf[0]+tbuf[1..-1].size-1)]=tbuf[1..-1]
     }
-    comm.each{ |s| @@visor.linked[s] << :ack }
+    comm.each{ |s| @@visorlinked[s] << :ack }
     rbuf=rbuf.flatten
   end
 
@@ -129,7 +133,7 @@ class BaseFresh < Rubinius::Actor
         @@nodes<<who.this
         if @@work_end and @@nodes.size==@@size
           @@nodes.each{ |rw| rw << Stop[:now] }
-          @@last_end=true
+          #@@last_end=true
           @@main<<1 # synchronous end
         end
       end
@@ -165,11 +169,9 @@ class BaseFresh < Rubinius::Actor
       end
     end
 
-    def start mproc, mult 
+    def start_old mproc, mult 
       init mult
-      mult.times{ 
-        @@visor << Work[mproc]
-      }
+      mult.times{ @@visor << Work[mproc] }
       finalize
     end
 
@@ -195,7 +197,7 @@ class BaseFresh < Rubinius::Actor
         @@nodes_run.concat current.linked.dup
         #main << Ready[current]
         @@main << Ready[current]
-        Rubinius::Actor.receive(&@@Do_filter) until false
+        Rubinius::Actor.receive(&@@Do_filter) until @@last_end
       end
       #wait_size freshsize
       Rubinius::Actor.receive
@@ -204,7 +206,7 @@ class BaseFresh < Rubinius::Actor
     def multinode 
       log = "Fresh raised #{@@exc.flatten.size} exceptions:\n"
       log += @@exc.flatten.map{|ex| 
-        "Node #{ex.actor.rank}/#{ex.actor.size} exit: #{ex.reason.backtrace.inspect}"
+        "Node #{ex.actor.rank}/#{ex.actor.size} exit: "+((ex.reason.nil?)?"OK":"#{ex.reason.backtrace.inspect}")
       }.join("\n")
       MultiNodeError.new(@@exc,log)
     end
@@ -219,9 +221,55 @@ class BaseFresh < Rubinius::Actor
       @@ret
     end
 
+    def start mproc, mult 
+
+      @@size= mult 
+      @@ret = [nil]*@@size
+      @@exc = Array.new(@@size+1){[]}
+
+      @@visor=current 
+      Rubinius::Actor.trap_exit = true
+      @@size.times do
+        spawn_link do  
+          current.rank=Rubinius::Actor.receive{|f| f.when(Rank){|m| m.rnk} }  
+          @@ret[current.rank]=current.instance_exec( &mproc.dup )
+        end
+      end
+      @@visorlinked=@@visor.linked.dup
+      @@visorlinked.each_with_index{|l,i| l<<Rank[i]}
+      while @@exc.map{|e|e.size}.inject(:+) < @@size do 
+        ex = Rubinius::Actor.receive
+        @@exc[ex.actor.rank]<<ex 
+      end
+      raise multinode unless @@exc.flatten.all?{|ex| ex.reason.nil? }
+      @@ret
+
+    end
+
   end
 
 end
+
+class Proc
+  def * mult
+    Fresh.start self , mult
+  end
+end
+
+class MultiNodeError < RuntimeError
+  attr_reader :multi
+  attr_reader :reason
+  def initialize(multi, reason)
+    super(reason)
+    @multi = multi
+    @reason = reason
+  end
+end
+
+Ready = Struct.new(:this)
+Work  = Struct.new(:msg)
+Stop  = Struct.new(:stp)
+Rank  = Struct.new(:rnk)
 
 class Fresh < BaseFresh 
 
@@ -586,24 +634,4 @@ class Fresh < BaseFresh
   end
 
 end
-
-class Proc
-  def * mult
-    Fresh.start self , mult
-  end
-end
-
-class MultiNodeError < RuntimeError
-  attr_reader :multi
-  attr_reader :reason
-  def initialize(multi, reason)
-    super(reason)
-    @multi = multi
-    @reason = reason
-  end
-end
-
-Ready = Struct.new(:this)
-Work  = Struct.new(:msg)
-Stop  = Struct.new(:stp)
 
