@@ -127,7 +127,8 @@ class BaseFresh < Rubinius::Actor
 
       @@size= mult 
       @@ret = [nil]*@@size
-      @@exc = Array.new(@@size+1){[]}
+#      @@exc = Array.new(@@size+1){[]}
+      @@exc = Array.new(@@size){[]}
 
       @@visor=current 
       Rubinius::Actor.trap_exit = true
@@ -139,7 +140,9 @@ class BaseFresh < Rubinius::Actor
       end
       @@visorlinked=@@visor.linked.dup
       @@visorlinked.each_with_index{|l,i| l<<Rank[i]}
-      while @@exc.map{|e|e.size}.inject(:+) < @@size do 
+#      while @@exc.map{|e|e.size}.inject(:+) < @@size do 
+#      while @@exc[0..-2].any?{|e|e.empty?} do 
+      while @@exc.any?{|e|e.empty?} do 
         ex = Rubinius::Actor.receive
         @@exc[ex.actor.rank]<<ex 
       end
