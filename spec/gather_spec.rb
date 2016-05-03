@@ -10,6 +10,14 @@ describe "gather" do
 
   end
 
+  it "" do
+
+    res = proc{ gather [rank+9], [0,0,0], [0], [1,2,3] }*4
+    res.size.should == 4
+    res.should == [[10,11,12], [0,0,0], [0,0,0], [0,0,0]] 
+
+  end
+
   it "4 nodes with tx/rx intersection" do
 
     res = proc{

@@ -193,7 +193,7 @@ class Fresh < BaseFresh
     call = caller[0][/`.*'/][1..-2]
     sbuf =[*args[0]]
     hash = Hash===args[-1] && args[-1]
-    rt   = [*args[2]].first || 
+    rt   = args[2] ||
            ( call[/bcast|scatter|scatterv/] && hash && hash[:from]) || 
            (!call[/bcast|scatter|scatterv/] && hash && hash[:to]) || 
            root
@@ -224,9 +224,10 @@ class Fresh < BaseFresh
   end
 
   def base_gather sbuf , rbuf , root , comm
-    gather_tx sbuf , rbuf , root , comm
-    gather_rx sbuf , rbuf , root , comm
-    gather_lc sbuf , rbuf , root , comm 
+    rt=[*root].first
+    gather_tx sbuf , rbuf , rt , comm
+    gather_rx sbuf , rbuf , rt , comm
+    gather_lc sbuf , rbuf , rt , comm 
     [*rbuf]
   end
 
