@@ -144,7 +144,7 @@ class BaseFresh < Rubinius::Actor
 #      while @@exc[0..-2].any?{|e|e.empty?} do 
       while @@exc.any?{|e|e.empty?} do 
         ex = Rubinius::Actor.receive
-        @@exc[ex.actor.rank]<<ex 
+        @@exc[ex.actor.rank]<<ex unless @@exc[ex.actor.rank].nil?
       end
       raise multinode unless @@exc.flatten.all?{|e| e.reason.nil? }
       @@ret
@@ -193,7 +193,7 @@ class Fresh < BaseFresh
     call = caller[0][/`.*'/][1..-2]
     sbuf =[*args[0]]
     hash = Hash===args[-1] && args[-1]
-    rt   = args[2] || 
+    rt   = [*args[2]].first || 
            ( call[/bcast|scatter|scatterv/] && hash && hash[:from]) || 
            (!call[/bcast|scatter|scatterv/] && hash && hash[:to]) || 
            root
@@ -249,7 +249,7 @@ class Fresh < BaseFresh
     commandroot= [*comm] & [*root]
     return unless commandroot.include? rank
     rk=comm.find_index(rank)
-    rbuf[rk..(rk+sbuf.size-1)]=[*sbuf] if commandroot.include? rank
+    rbuf[(rk*sbuf.size)..((rk+1)*sbuf.size-1)]=[*sbuf] if commandroot.include? rank
   end
 
   def scan *args
