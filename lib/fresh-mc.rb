@@ -36,7 +36,7 @@ class Array
   dot = self.instance_method(:*)
 
   define_method(:*) do |arg|
-    return self.zip(arg).map{|a,b|a*b}.reduce(:+) if Array===arg
+    return self.zip(arg).map{|a,b|a*b}.inject(:+) if Array===arg
     dot.bind(self).call(arg)
   end
 
@@ -261,9 +261,9 @@ class Fresh < BaseFresh
     res=gather sbuf , rbuf , rt.first , comm 
     res2=bcast res , rbuf2 , rt.first , rt
     if rt.index(rank).nil?
-      [ * res2.reduce(op) ]
+      [ * res2.inject(op) ]
     else
-      [ * res2.values_at(*rt.values_at(*0..(rt.index(rank)))).reduce(op) ]
+      [ * res2.values_at(*rt.values_at(*0..(rt.index(rank)))).inject(op) ]
     end
   end
 
@@ -286,7 +286,7 @@ class Fresh < BaseFresh
   def base_reduce op, sbuf , rbuf , rt , comm
     res=gather sbuf , rbuf , rt , comm
     sbuf.size.times.map{|i|
-      res.values_at(*(i...res.size).step(sbuf.size).to_a).reduce(op)
+      res.values_at(*(i...res.size).step(sbuf.size).to_a).inject(op)
     }
   end
 
