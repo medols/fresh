@@ -186,8 +186,8 @@ class Fresh < BaseFresh
 #  def alltoall sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 
-  def argsapi *args
-    call = caller[0][/`.*'/][1..-2]
+  def argsapi call , *args
+    #call = caller[0][/`.*'/][1..-2]
     sbuf =[*args[0]]
     hash = Hash===args[-1] && args[-1]
     rt   = args[2] ||
@@ -217,7 +217,7 @@ class Fresh < BaseFresh
 # @return [Array] the receiver buffer with the gathered data.
 
   def gather *args
-    base_gather(*argsapi(*args))
+    base_gather(*argsapi("gather",*args))
   end
 
   def base_gather sbuf , rbuf , root , comm
@@ -251,7 +251,7 @@ class Fresh < BaseFresh
   end
 
   def scan *args
-    base_scan(args[0],*argsapi(*args[1..-1]))
+    base_scan(args[0],*argsapi("scan",*args[1..-1]))
   end
 
   def base_scan op, sbuf , rbuf , rt , comm
@@ -268,7 +268,7 @@ class Fresh < BaseFresh
   end
 
   def allgather *args
-    base_allgather(*argsapi(*args))
+    base_allgather(*argsapi("allgather",*args))
   end
 
   def base_allgather sbuf , rbuf , rt , comm 
@@ -280,7 +280,7 @@ class Fresh < BaseFresh
   end
 
   def reduce *args
-    base_reduce(args[0],*argsapi(*args[1..-1]))
+    base_reduce(args[0],*argsapi("reduce",*args[1..-1]))
   end
 
   def base_reduce op, sbuf , rbuf , rt , comm
@@ -291,7 +291,7 @@ class Fresh < BaseFresh
   end
 
   def reduce_scatter *args
-    base_reduce_scatter(args[0],*argsapi(*args[1..-1]))
+    base_reduce_scatter(args[0],*argsapi("reduce_scatter",*args[1..-1]))
   end
 
   def base_reduce_scatter op, sbuf , rbuf , rt , comm
@@ -302,7 +302,7 @@ class Fresh < BaseFresh
   end
 
   def allreduce *args 
-    base_allreduce(args[0],*argsapi(*args[1..-1]))
+    base_allreduce(args[0],*argsapi("allreduce",*args[1..-1]))
   end
 
   def base_allreduce op, sbuf , rbuf , rt , comm
@@ -315,7 +315,7 @@ class Fresh < BaseFresh
   end
 
   def sendrecv *args
-    base_sendrecv(*argsapi(*args))
+    base_sendrecv(*argsapi("sendrecv",*args))
   end
  
   def base_sendrecv sbuf , rbuf , root , comm
@@ -343,7 +343,7 @@ class Fresh < BaseFresh
 #  def bcast sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 
   def bcast *args
-    base_bcast(*argsapi(*args))
+    base_bcast(*argsapi("bcast",*args))
   end
 
   def base_bcast sbuf , rbuf , root , comm 
@@ -377,7 +377,7 @@ class Fresh < BaseFresh
   end
 
   def scatterv *args
-    base_scatterv(args[0],args[1],*argsapi(*args[2..-1]))
+    base_scatterv(args[0],args[1],*argsapi("scatterv",*args[2..-1]))
   end
 
   def base_scatterv scon , sdis , sbuf , rbuf , root , comm
@@ -411,7 +411,7 @@ class Fresh < BaseFresh
   end
 
   def scatter *args
-    base_scatter(*argsapi(*args))
+    base_scatter(*argsapi("scatter",*args))
   end
 
   def base_scatter sbuf , rbuf , root , comm
@@ -445,7 +445,7 @@ class Fresh < BaseFresh
   end
 
   def alltoall *args
-    base_alltoall(*argsapi(*args))
+    base_alltoall(*argsapi("alltoall",*args))
   end
 
   def base_alltoall sbuf , rbuf , root , comm
