@@ -127,7 +127,6 @@ class BaseFresh < Rubinius::Actor
 
       @@size= mult 
       @@ret = [nil]*@@size
-#      @@exc = Array.new(@@size+1){[]}
       @@exc = Array.new(@@size){[]}
 
       @@visor=current 
@@ -140,8 +139,6 @@ class BaseFresh < Rubinius::Actor
       end
       @@visorlinked=@@visor.linked.dup
       @@visorlinked.each_with_index{|l,i| l<<Rank[i]}
-#      while @@exc.map{|e|e.size}.inject(:+) < @@size do 
-#      while @@exc[0..-2].any?{|e|e.empty?} do 
       while @@exc.any?{|e|e.empty?} do 
         ex = Rubinius::Actor.receive
         @@exc[ex.actor.rank]<<ex unless @@exc[ex.actor.rank].nil?
@@ -207,7 +204,7 @@ class Fresh < BaseFresh
            (call[/alltoall/] && comm.size) || 
            (call[/sendrecv|bcast/] && sbuf.size) || 
            (call[/scatter|scatterv/] && (sbuf.size/comm.size)) || 
-           (sbuf.size*comm.size) )
+           (sbuf.size*[*comm].size) )
     [ sbuf , rbuf , rt , comm ]
   end
  
@@ -298,6 +295,7 @@ class Fresh < BaseFresh
   end
 
   def base_reduce_scatter op, sbuf , rbuf , rt , comm
+    comm=[*comm]
     rbuf2=rbuf.dup unless rbuf.nil?
     res=reduce op, sbuf , rbuf , rt , comm 
     scatter res , rbuf2 , rt , comm 
@@ -375,7 +373,7 @@ class Fresh < BaseFresh
   end
 
   def each_slice sbuf, spos, slen
-    spos.zip(slen).map{|p,l| sbuf.new_range(p,l).map{|m|m||0}}
+    spos.zip(slen).map{|p,l| ss=sbuf.slice(p,l); ss.fill(0, l-1, l-ss.size)}
   end
 
   def scatterv *args
@@ -416,7 +414,8 @@ class Fresh < BaseFresh
     base_scatter(*argsapi(*args))
   end
 
-  def base_scatter sbuf , rbuf , root , comm 
+  def base_scatter sbuf , rbuf , root , comm
+    comm=[*comm] 
     scatter_tx sbuf , rbuf , root , comm
     scatter_rx sbuf , rbuf , root , comm
     scatter_lc sbuf , rbuf , root , comm
@@ -449,7 +448,8 @@ class Fresh < BaseFresh
     base_alltoall(*argsapi(*args))
   end
 
-  def base_alltoall sbuf , rbuf , root , comm 
+  def base_alltoall sbuf , rbuf , root , comm
+    root=[*root] 
     alltoall_tx sbuf , rbuf , root , comm
     alltoall_rx sbuf , rbuf , root , comm
     rbuf
