@@ -1,7 +1,7 @@
 language: ruby
 rvm:
 - rbx
-- jruby
+- jruby-head
 install:
 - gem install codeclimate-test-reporter
 - gem install rubinius-actor
