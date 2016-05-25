@@ -38,8 +38,8 @@ module Enumerable
     inject(0, :+)
   end
   def dot sym,val
-    return zip(val).map{|x,y| sym.to_proc.call(x,y)} if Enumerable===val
-    map{|e| sym.to_proc.call(e,val)}
+    return zip(val).map{|x,y| x.send(sym,y)} if Enumerable===val
+    map{|e| e.send(sym,val) }
   end
   def call *args, &block
     return yield(*args) if self===Fresh::current.rank
