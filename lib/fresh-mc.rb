@@ -31,6 +31,27 @@
 
 require 'rubinius/actor'
 
+include Math
+
+module Enumerable
+  def sum
+    inject(0, :+)
+  end
+  def dot sym,val
+    return zip(val).map{|x,y| sym.to_proc.call(x,y)} if Enumerable===val
+    map{|e| sym.to_proc.call(e,val)}
+  end
+  def call *args, &block
+    return yield(*args) if self===Fresh::current.rank
+  end
+end
+
+class Fixnum
+  def call *args, &block
+    return yield(*args) if self===Fresh::current.rank
+  end
+end
+
 class Array
 
   dot = self.instance_method(:*)
@@ -193,6 +214,7 @@ class Fresh < BaseFresh
     rt   = args[2] ||
            ( call[/bcast|scatter|scatterv/] && hash && hash[:from]) || 
            (!call[/bcast|scatter|scatterv/] && hash && hash[:to]) || 
+           ( call[/allgather/] && all) || 
            root
     comm = args[3] || 
            ( call[/bcast|scatter|scatterv/] && hash && hash[:to]) || 

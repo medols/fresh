@@ -74,5 +74,30 @@ describe "proc mpi api" do
     }*6).first.should == [78, 72, 130, 288, 408, 788, 542]
   end
 
+  it "line fit" do
+
+    XY =[
+      [   3.246660,   3.217080,   3.187500,   3.157919,   3.128339,   3.098758,   3.069178,   3.039597,   3.010017,   2.980436],
+      [  -0.572929,  -0.352684,  -0.132440,   0.087805,   0.308050,   0.528294,   0.748539,   0.968784,   1.189028,   1.409273]
+    ]
+
+    res=proc{     
+      xyc = [ XY[rank].sum / XY[rank].size ].allgather
+      dXY = [ XY[rank].dot( :-, xyc[rank]) ].allgather
+      numdenom = [ 
+        0.(){ -2 * (dXY[0]*dXY[1]) } || 
+        1.(){ 
+          x2 = dXY[0].dot(:**,2)
+          y2 = dXY[1].dot(:**,2) 
+          y2.dot(:-,x2).sum 
+        }].allgather
+      alpha = atan2(numdenom[0] , numdenom[1]) / 2
+      r = xyc * [ cos(alpha) , sin(alpha) ]
+      [alpha,r]
+    }*2
+    res.first.should == [0.13350834495469482, 3.141504649165192]
+
+  end
+
 end
 
