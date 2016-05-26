@@ -82,18 +82,30 @@ describe "proc mpi api" do
     ]
 
     res=proc{     
-      xyc = [ XY[rank].sum / XY[rank].size ].allgather
-      dXY = [ XY[rank].dot( :-, xyc[rank]) ].allgather
-      numdenom = [ 
-        0.(){ -2 * (dXY[0]*dXY[1]) } || 
-        1.(){ 
-          x2 = dXY[0].dot(:**,2)
-          y2 = dXY[1].dot(:**,2) 
-          y2.dot(:-,x2).sum 
-        }].allgather
-      alpha = atan2(numdenom[0] , numdenom[1]) / 2
-      r = xyc * [ cos(alpha) , sin(alpha) ]
-      [alpha,r]
+      # xyc  = [ sum(XY(1, :)) / length(XY(1,:)) ,
+      #          sum(XY(2, :)) / length(XY(2,:)) ];
+        xyc  = [ XY[rank].sum / XY[rank].size ].allgather
+
+      # dXY  = [ XY(1, :) .- xyc(1) ,
+      #          XY(2, :) .- xyc(2) ];
+        dXY  = [ XY[rank].dot(:-, xyc[rank]) ].allgather
+
+      # dXY2 = [ dXY(1, :) .* dXY(1, :) ,
+      #          dXY(2, :) .* dXY(2, :) ];  
+        dXY2 = [ dXY[rank].dot(:**,2) ].allgather
+  
+      # num_denom = [ -2 * sum(dXY(1,:).*dXY(2,:)) ,
+      #               sum((dXY(2,:).*dXY(2,:)) - (dXY(1,:).*dXY(1,:))) ];
+        num_denom = [ at(0){ -2 * (dXY[0]*dXY[1]) } ||
+                     at(1){ dXY2[1].dot(:-,dXY2[0]).sum } ].allgather
+
+      # alpha = atan2(num_denom(1) , num_denom(2) ) / 2;
+        alpha = atan2(num_denom[0] , num_denom[1]) / 2
+
+      # r = xyc' * [ cos(alpha) , sin(alpha) ]';
+        r = xyc  * [ cos(alpha) , sin(alpha) ]
+
+        [alpha,r]
     }*2
     res.first.should == [0.13350834495469482, 3.141504649165192]
 

@@ -41,14 +41,20 @@ module Enumerable
     return zip(val).map{|x,y| x.send(sym,y)} if Enumerable===val
     map{|e| e.send(sym,val) }
   end
-  def call *args, &block
-    return yield(*args) if self===Fresh::current.rank
-  end
+#  def call *args, &block
+#    return yield(*args) if self===Fresh::current.rank
+#  end
 end
 
-class Fixnum
-  def call *args, &block
-    return yield(*args) if self===Fresh::current.rank
+#class Fixnum
+#  def call *args, &block
+#    return yield(*args) if self===Fresh::current.rank
+#  end
+#end
+
+class Object
+  def at range, &block
+    return yield if range===Fresh::current.rank
   end
 end
 
