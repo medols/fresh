@@ -53,7 +53,7 @@ end
 #end
 
 class Object
-  def at range, &block
+  def at range
     return yield if range===Fresh::current.rank
   end
 end
@@ -150,18 +150,18 @@ class BaseFresh < Rubinius::Actor
       MultiNodeError.new(@@exc,log)
     end
 
-    def start mproc, mult 
-
-      @@size= mult 
+    def start mproc, *mult 
+      @@size= mult.shift
       @@ret = [nil]*@@size
       @@exc = Array.new(@@size){[]}
+      @@params=mult
 
       @@visor=current 
       Rubinius::Actor.trap_exit = true
       @@size.times do
         spawn_link do  
-          current.rank=Rubinius::Actor.receive{|f| f.when(Rank){|m| m.rnk} }  
-          @@ret[current.rank]=current.instance_exec( &mproc.dup )
+          current.rank=Rubinius::Actor.receive{|f| f.when(Rank){|m| m.rnk} }
+          @@ret[current.rank]=current.instance_exec( *@@params , &mproc.dup )
         end
       end
       @@visorlinked=@@visor.linked.dup
@@ -180,8 +180,8 @@ class BaseFresh < Rubinius::Actor
 end
 
 class Proc
-  def * mult
-    Fresh.start self , mult
+  def *(*mult)
+    Fresh.start(*([self].concat(mult).flatten))
   end
 end
 

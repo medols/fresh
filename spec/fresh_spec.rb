@@ -111,5 +111,40 @@ describe "proc mpi api" do
 
   end
 
+  it "pass parameters 0 implicit" do
+    res=proc{|*args| args }*4
+    res.should == [[], [], [], []] 
+  end
+
+  it "pass parameters 0 explicit" do
+    res=proc{|*args| args }*(4)
+    res.should == [[], [], [], []] 
+  end
+
+  it "pass parameters matrix 0 structure" do
+    res=proc{|*args| args }*[4]
+    res.should == [[], [], [], []] 
+  end
+ 
+  it "pass parameters matrix 1" do
+    res=proc{|*args| args }*[4,1]
+    res.should == [[1], [1], [1], [1]] 
+  end
+
+  it "pass parameters matrix 2" do
+    res=proc{|*args| args }*[4,1,2]
+    res.should == [[1, 2], [1, 2], [1, 2], [1, 2]] 
+  end
+
+  it "pass parameters matrix 3" do
+    res=proc{|*args| args }*[4,1,2,3]
+    res.should == [[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]  
+  end
+
+  it "pass parameters matrix 3" do
+    res=proc{|*args| args }*[4,[1,2,3]]
+    res.should == [[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]  
+  end
+
 end
 
