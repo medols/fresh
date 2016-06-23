@@ -22,6 +22,10 @@ os:
   - linux
   - osx
 
+matrix:
+  allow_failures:
+    - rvm: jruby-head
+
 addons:
   code_climate:
     repo_token: 6537e4c035e1b3a7294eee716197b11662f2ff53ec46ef7496e0c74f895fbee7
