@@ -16,6 +16,10 @@ branches:
   only:
     - master
 
+os:
+  - linux
+  - osx
+
 matrix:
   include:
     - os: linux
