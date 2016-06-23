@@ -1,4 +1,6 @@
 language: ruby
+dist: trusty
+sudo: required
 
 rvm:
   - rbx
@@ -19,13 +21,6 @@ branches:
 os:
   - linux
   - osx
-
-matrix:
-  include:
-    - os: linux
-      dist: trusty
-      sudo: required
-    - os: osx
 
 addons:
   code_climate:
