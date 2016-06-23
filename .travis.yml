@@ -31,12 +31,7 @@ deploy:
   gemspec: fresh-mc.gemspec
 
 matrix:
-  allow_failures:
-    - rvm: jruby-head
-
-matrix:
-    include:
-        - os: linux
-          sudo: required
-          dist: trusty
-
+  include:
+    - os: linux
+      sudo: required
+      dist: trusty
