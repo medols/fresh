@@ -150,18 +150,48 @@ class BaseFresh < Rubinius::Actor
       MultiNodeError.new(@@exc,log)
     end
 
+    def dev mult, &block
+      @@size=mult
+      @@mproc=block
+      @@visor=current 
+    end
+
+    def calldev mult 
+      @@ret = [nil]*@@size
+      @@exc = Array.new(@@size){[]}
+      @@params=mult
+
+      Rubinius::Actor.trap_exit = true
+      @@size.times do
+        spawn_link do  
+          current.rank=Rubinius::Actor.receive{|f| f.when(Rank){|m| m.rnk} }
+          @@ret[current.rank]=current.instance_exec( *@@params , &@@mproc.dup ) 
+        end
+      end
+      @@visorlinked=@@visor.linked.dup
+      @@visorlinked.each_with_index{|l,i| l<<Rank[i]}
+      while @@exc.any?{|e|e.empty?} do 
+        ex = Rubinius::Actor.receive
+        @@exc[ex.actor.rank]<<ex unless @@exc[ex.actor.rank].nil?
+      end
+      raise multinode unless @@exc.flatten.all?{|e| e.reason.nil? }
+      @@ret
+
+    end
+
     def start mproc, *mult 
       @@size= mult.shift
       @@ret = [nil]*@@size
       @@exc = Array.new(@@size){[]}
       @@params=mult
+      @@mproc=mproc
 
       @@visor=current 
       Rubinius::Actor.trap_exit = true
       @@size.times do
         spawn_link do  
           current.rank=Rubinius::Actor.receive{|f| f.when(Rank){|m| m.rnk} }
-          @@ret[current.rank]=current.instance_exec( *@@params , &mproc.dup )
+          @@ret[current.rank]=current.instance_exec( *@@params , &@@mproc.dup ) 
         end
       end
       @@visorlinked=@@visor.linked.dup
@@ -177,6 +207,18 @@ class BaseFresh < Rubinius::Actor
 
   end
 
+end
+
+def fed *args, &block
+  block*args
+end
+
+def def_fdev mult, &block
+  Fresh.dev(mult, &block)  
+end
+
+def fdev_call *args
+  Fresh.calldev(*args).first
 end
 
 class Proc

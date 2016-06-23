@@ -146,5 +146,13 @@ describe "proc mpi api" do
     res.should == [[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]  
   end
 
+  it "define fresh device and call with parameter matrix 2" do
+    def_fdev(2){ |*vo| [ [[1,2],[3,4]][rank] * vo.bcast ].gather }
+    res1=fdev_call [1, 2]
+    res2=fdev_call [3, 4]
+    res1.should == [5,11]  
+    res2.should == [11,25]
+  end
+
 end
 

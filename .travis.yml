@@ -13,6 +13,8 @@ branches:
   - master
 os:
 - linux
+  sudo: required
+  dist: trusty
 - osx
 addons:
   code_climate:
