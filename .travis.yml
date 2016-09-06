@@ -3,7 +3,7 @@ dist: trusty
 sudo: required
 
 rvm:
-  - rubinius
+  - rubinius-3
   - jruby-head
 
 install:
