@@ -3,7 +3,7 @@ dist: trusty
 sudo: required
 
 rvm:
-  - rbx
+  - rubinius
   - jruby-head
 
 install:
@@ -25,6 +25,7 @@ os:
 matrix:
   allow_failures:
     - rvm: jruby-head
+      os: linux
 
 addons:
   code_climate:
