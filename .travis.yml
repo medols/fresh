@@ -26,6 +26,8 @@ matrix:
   allow_failures:
     - rvm: jruby-head
       os: linux
+    - rvm: rubinius-3
+      os: osx
 
 addons:
   code_climate:
