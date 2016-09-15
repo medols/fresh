@@ -22,9 +22,6 @@ os:
   - linux
   - osx
 
-osx_image:
-  - xcode8
-
 matrix:
   allow_failures:
     - rvm: jruby-head
