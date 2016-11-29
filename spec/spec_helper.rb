@@ -1,6 +1,8 @@
 if ENV.has_key? "CODECLIMATE_REPO_TOKEN"
-  require "codeclimate-test-reporter"
-  CodeClimate::TestReporter.start
+  #require "codeclimate-test-reporter"
+  #CodeClimate::TestReporter.start
+  require "simplecov"
+  SimpleCov.start
 end
 
 require "rubygems"
