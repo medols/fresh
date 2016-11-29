@@ -157,7 +157,7 @@ class BaseFresh < Rubinius::Actor
       @@visor=current 
     end
 
-    def calldev mult 
+    def calldev *mult 
       @@ret = [nil]*@@size
       @@exc = Array.new(@@size){[]}
       @@params=mult
@@ -173,7 +173,7 @@ class BaseFresh < Rubinius::Actor
       @@visorlinked.each_with_index{|l,i| l<<Rank[i]}
       while @@exc.any?{|e|e.empty?} do 
         ex = Rubinius::Actor.receive
-        @@exc[ex.actor.rank]<<ex unless @@exc[ex.actor.rank].nil?
+        @@exc[ex.actor.rank] << ex unless @@exc[ex.actor.rank].nil?
       end
       raise multinode unless @@exc.flatten.all?{|e| e.reason.nil? }
       @@ret
@@ -182,7 +182,7 @@ class BaseFresh < Rubinius::Actor
 
     def start mproc, *mult
       dev mult.shift, &mproc
-      calldev mult
+      calldev *mult
     end
 
   end
@@ -198,7 +198,7 @@ def def_fdev mult, &block
 end
 
 def fdev_call *args
-  Fresh.calldev(*args).first
+  Fresh.calldev(*args)
 end
 
 class Proc
