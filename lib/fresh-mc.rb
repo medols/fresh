@@ -157,7 +157,7 @@ class BaseFresh < Rubinius::Actor
       @@visor=current 
     end
 
-    def calldev *mult 
+    def calldev(*mult) 
       @@ret = [nil]*@@size
       @@exc = Array.new(@@size){[]}
       @@params=mult
@@ -182,7 +182,7 @@ class BaseFresh < Rubinius::Actor
 
     def start mproc, *mult
       dev mult.shift, &mproc
-      calldev *mult
+      calldev(*mult)
     end
 
   end
