@@ -41,4 +41,4 @@ deploy:
   gemspec: fresh-mc.gemspec
 
 after_success:
-  - codeclimate-test-reporter
+  - CODECLIMATE_REPO_TOKEN=6537e4c035e1b3a7294eee716197b11662f2ff53ec46ef7496e0c74f895fbee7 codeclimate-test-reporter
