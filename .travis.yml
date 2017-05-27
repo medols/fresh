@@ -32,13 +32,17 @@ os:
 addons:
   code_climate:
     repo_token: 6537e4c035e1b3a7294eee716197b11662f2ff53ec46ef7496e0c74f895fbee7
+  apt:
+    packages:
+      - haveged
 
 after_success:
+  - env
   - find coverage
   - ls -al coverage/.resultset.json
-  - cat coverage/.resultset.json
+#  - cat coverage/.resultset.json
   - gem install codeclimate-test-reporter
-  - codeclimate-test-reporter 
+  - [ "$TRAVIS_OS_NAME" == "linux" ] && codeclimate-test-reporter 
 
 #deploy:
 #  provider: rubygems
