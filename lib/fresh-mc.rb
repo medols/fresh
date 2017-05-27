@@ -146,11 +146,7 @@ class BaseFresh < Rubinius::Actor
     def multinode 
       log = "Fresh raised #{@@exc.flatten.size} exceptions:\n"
       log += @@exc.flatten.map{|ex| 
-        unless ex.responds_to? :actor
-          "Node #{ex.actor.rank}/#{ex.actor.size} exit: "+((ex.reason.nil?)?"OK":"#{ex.reason.backtrace.inspect}")
-        else
-          "Undefined node exit: "+((ex.reason.nil?)?"OK":"#{ex.reason.backtrace.inspect}")
-        end
+        "Node #{ex.actor.rank}/#{ex.actor.size} exit: "+((ex.reason.nil?)?"OK":"#{ex.reason.backtrace.inspect}")
       }.join("\n")
       MultiNodeError.new(@@exc,log)
     end
@@ -177,10 +173,7 @@ class BaseFresh < Rubinius::Actor
       @@visorlinked.each_with_index{|l,i| l<<Rank[i]}
       while @@exc.any?{|e|e.empty?} do 
         ex = Rubinius::Actor.receive
-        warn ex.inspect if Rank===ex
-        unless Rank===ex
-          @@exc[ex.actor.rank] << ex unless @@exc[ex.actor.rank].nil?
-        end
+        @@exc[ex.actor.rank] << ex unless @@exc[ex.actor.rank].nil?
       end
       raise multinode unless @@exc.flatten.all?{|e| e.reason.nil? }
       @@ret
