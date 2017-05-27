@@ -42,7 +42,7 @@ after_success:
   - ls -al coverage/.resultset.json
 #  - cat coverage/.resultset.json
   - gem install codeclimate-test-reporter
-  - [ "$TRAVIS_OS_NAME" == "linux" ] && codeclimate-test-reporter 
+  - if [ ${TRAVIS_OS_NAME} == "linux" ]; then codeclimate-test-reporter ; fi
 
 #deploy:
 #  provider: rubygems
