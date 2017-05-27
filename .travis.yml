@@ -35,8 +35,8 @@ addons:
     repo_token: 6537e4c035e1b3a7294eee716197b11662f2ff53ec46ef7496e0c74f895fbee7
 
 after_success:
-  - ls -al coverage
-  - codeclimate-test-reporter < coverage/lcov.info
+  - ls -al coverage/*
+  - codeclimate-test-reporter 
 
 #deploy:
 #  provider: rubygems
