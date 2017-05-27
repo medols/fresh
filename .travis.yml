@@ -4,7 +4,7 @@ sudo: required
 
 rvm:
   - rubinius-3
-  - jruby-head
+#  - jruby-head
 
 install:
   - gem install simplecov
@@ -20,14 +20,14 @@ branches:
 
 os:
   - linux
-  - osx
+#  - osx
 
-matrix:
-  allow_failures:
-    - rvm: jruby-head
-      os: linux
-    - rvm: rubinius-3
-      os: osx
+#matrix:
+#  allow_failures:
+#    - rvm: jruby-head
+#      os: linux
+#    - rvm: rubinius-3
+#      os: osx
 
 addons:
   code_climate:
@@ -35,6 +35,8 @@ addons:
 
 after_success:
   - find coverage
+  - ls -al coverage/.resultset.json
+  - cat coverage/.resultset.json
   - gem install codeclimate-test-reporter
   - codeclimate-test-reporter 
 
