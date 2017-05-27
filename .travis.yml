@@ -20,7 +20,7 @@ branches:
 
 os:
   - linux
-#  - osx
+  - osx
 
 #matrix:
 #  allow_failures:
