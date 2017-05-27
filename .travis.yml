@@ -8,7 +8,6 @@ rvm:
 
 install:
   - gem install simplecov
-  - gem install codeclimate-test-reporter
   - gem install rubinius-actor
   - git clone https://github.com/ruby/mspec.git ../mspec
 
@@ -35,7 +34,8 @@ addons:
     repo_token: 6537e4c035e1b3a7294eee716197b11662f2ff53ec46ef7496e0c74f895fbee7
 
 after_success:
-  - ls -al coverage/*
+  - find coverage
+  - gem install codeclimate-test-reporter
   - codeclimate-test-reporter 
 
 #deploy:
