@@ -217,12 +217,10 @@ class MultiNodeError < RuntimeError
   end
 end
 
-Ready = Struct.new(:this)
-Work  = Struct.new(:msg)
-Stop  = Struct.new(:stp)
+#Ready = Struct.new(:this)
+#Work  = Struct.new(:msg)
+#Stop  = Struct.new(:stp)
 Rank  = Struct.new(:rnk)
-
-class Fresh < BaseFresh 
 
 #  def bcast    sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def sendrecv sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
@@ -235,8 +233,34 @@ class Fresh < BaseFresh
 #  def alltoall sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 #  def allreduce op, sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 
+# def argsapi call, *args
+#   call = caller[0][/`.*'/][1..-2]
+
+# Gather from many to one.
+#
+# @param sbuf [Array] the send buffer.
+# @param rbuf [Array] the receiver buffer.
+# @param root [Fixnum] the node that receives all data.
+# @param comm [Array] the nodes that have data to send.
+# @return [Array] the receiver buffer with the gathered data.
+
+# Broadcast  a copy of the send buffer +sbuf+ from +root+ to the receive buffer +rbuf+ of all nodes in the receiver array +comm+
+#
+# @param sbuf [Array] the initialized sender buffer.
+# @param rbuf [Array] the initialized receiver buffer.
+# @param root [Fixnum] the sender rank.
+# @param comm [Array] the set of receiver ranks. 
+# @return [Array] the receiver buffer +rbuf+ with the incomming data
+# @raise [MultiNodeError] If at least one node or the visor raises an exception
+# @example Broadcast sequence 0..7 individually from node 0 to nodes [0,1,2,3]
+# p proc{8.times.map{|i| bcast [i] , [0] , 0 , 0..3}.flatten }*4 
+#
+
+#  def bcast sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
+
+class Fresh < BaseFresh 
+
   def argsapi call , *args
-    #call = caller[0][/`.*'/][1..-2]
     sbuf =[*args[0]]
     hash = Hash===args[-1] && args[-1]
     rt   = args[2] ||
@@ -258,14 +282,6 @@ class Fresh < BaseFresh
     [ sbuf , rbuf , rt , comm ]
   end
  
-# Gather from many to one.
-#
-# @param sbuf [Array] the send buffer.
-# @param rbuf [Array] the receiver buffer.
-# @param root [Fixnum] the node that receives all data.
-# @param comm [Array] the nodes that have data to send.
-# @return [Array] the receiver buffer with the gathered data.
-
   def gather *args
     base_gather(*argsapi("gather",*args))
   end
@@ -377,20 +393,6 @@ class Fresh < BaseFresh
     gather_rx sbuf , rbuf , root , [ comm[root.find_index rank] ] if rootdecomm.include? rank
     [*rbuf]
   end
-
-# Broadcast  a copy of the send buffer +sbuf+ from +root+ to the receive buffer +rbuf+ of all nodes in the receiver array +comm+
-#
-# @param sbuf [Array] the initialized sender buffer.
-# @param rbuf [Array] the initialized receiver buffer.
-# @param root [Fixnum] the sender rank.
-# @param comm [Array] the set of receiver ranks. 
-# @return [Array] the receiver buffer +rbuf+ with the incomming data
-# @raise [MultiNodeError] If at least one node or the visor raises an exception
-# @example Broadcast sequence 0..7 individually from node 0 to nodes [0,1,2,3]
-# p proc{8.times.map{|i| bcast [i] , [0] , 0 , 0..3}.flatten }*4 
-#
-
-#  def bcast sbuf , rbuf=nil , rt=nil , comm=nil ,  to:nil , from:nil
 
   def bcast *args
     base_bcast(*argsapi("bcast",*args))
