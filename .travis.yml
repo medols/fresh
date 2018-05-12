@@ -8,9 +8,9 @@ os:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then rvm use rubinius-3 --install --binary --fuzzy; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update           ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew tap rubinius/apps; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew install rubinius ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew update > /dev/null ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew tap rubinius/apps  ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   ]]; then brew install rubinius   ; fi
 
 install:
   - gem install simplecov
