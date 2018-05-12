@@ -2,9 +2,18 @@ language: ruby
 dist: trusty
 sudo: required
 
-rvm:
-  - rubinius-3
-  - jruby-head
+matrix:
+    include:
+        - os: linux
+          rvm: rubinius-3
+        - os: linux
+          rvm: jruby-head
+        - os: osx
+          before_install: brew update
+          before_install: brew install rubinius
+        - os: osx
+          before_install: brew update
+          before_install: brew install jruby
 
 install:
   - gem install simplecov
@@ -18,18 +27,11 @@ branches:
   only:
     - master
 
-os:
-  - linux
-  - osx
-
 matrix:
   allow_failures:
-    - rvm: rubinius-3
-      os: osx
-    - rvm: jruby-head
-      os: linux
-    - rvm: jruby-head
-      os: osx
+    - os: linux
+      rvm: jruby-head
+    - os: osx
 
 addons:
   code_climate:
