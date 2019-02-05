@@ -15,12 +15,14 @@ before_install:
   - echo $RUBY_USE
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew update > /dev/null ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew tap rubinius/apps  ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew install rubinius   ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then export PATH="/usr/local/opt/rubinius/bin:$PATH" ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "jruby-head" ]]; then brew update > /dev/null ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "jruby-head" ]]; then brew install jruby   ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew update > /dev/null ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew tap rubinius/apps  ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew install rubinius   ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then export PATH="/usr/local/opt/rubinius/bin:$PATH" ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "jruby-head" ]]; then brew update > /dev/null ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "jruby-head" ]]; then brew install jruby   ; fi
 
 install:
   - gem install simplecov
