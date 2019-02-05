@@ -6,9 +6,13 @@ os:
   - linux
   - osx
 
-env:
-  - RUBY_USE=rubinius-3
-  - RUBY_USE=jruby-head
+rvm:
+  - rbx-head
+  - jruby-head
+
+#env:
+#  - RUBY_USE=rubinius-3
+#  - RUBY_USE=jruby-head
 
 before_install:
   - echo $TRAVIS_OS_NAME
@@ -16,9 +20,9 @@ before_install:
 #  - rvm get stable
   - rvm list known
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew update > /dev/null ; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew tap rubinius/apps  ; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then brew install rubinius   ; fi
