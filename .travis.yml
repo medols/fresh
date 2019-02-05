@@ -13,7 +13,7 @@ env:
 before_install:
   - echo $TRAVIS_OS_NAME
   - echo $RUBY_USE
-  - rvm get stable
+#  - rvm get stable
   - rvm list known
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
