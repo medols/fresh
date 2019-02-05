@@ -107,8 +107,10 @@ describe "proc mpi api" do
 
         [alpha,r]
     }*2
-    res.first.should == [0.13350834495469482, 3.141504649165192]
+    #res.first.should == [0.13350834495469482, 3.141504649165192]
 
+     res.first[0].should be_close(0.13350834495469482,0.00000000000001)
+     res.first[1].should be_close(3.141504649165192  ,0.00000000000001)
   end
 
   it "pass parameters 0 implicit" do
