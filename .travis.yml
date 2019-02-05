@@ -11,7 +11,9 @@ env:
   - TRAVIS_RUBY_VERSION=jruby-head
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUBY_VERSION" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
+  - echo $TRAVIS_OS_NAME
+  - echo $TRAVIS_RUBY_VERSION
+#  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUBY_VERSION" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUBY_VERSION" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$TRAVIS_RUBY_VERSION" == "rubinius-3" ]]; then brew update > /dev/null ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$TRAVIS_RUBY_VERSION" == "rubinius-3" ]]; then brew tap rubinius/apps  ; fi

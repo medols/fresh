@@ -46,8 +46,8 @@ Fresh-mc is a ruby gem for exploring many-core programming with mpi.
 
 ### Credits
 
-    Copyright 2015-2016  Jaume Masip-Torne <jmasip@gianduia.net>
-              2015-2016  Ismael Merodio-Codinachs <ismael@gianduia.net>
+    Copyright 2015-2019  Jaume Masip-Torne <jmasip@fresh-mc.com>
+              2015-2019  Ismael Merodio-Codinachs <ismael@fresh-mc.com>
 
 ### Running the specs
 
