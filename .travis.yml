@@ -42,11 +42,12 @@ branches:
   only:
     - master
 
-#matrix:
-#  allow_failures:
+matrix:
+  allow_failures:
 #    - os: linux
 #      env: RUBY_USE=jruby-head
-#    - os: osx
+    - os: osx
+      rvm: rbx-3
 
 addons:
   code_climate:
