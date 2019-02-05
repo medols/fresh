@@ -42,11 +42,11 @@ branches:
   only:
     - master
 
-matrix:
-  allow_failures:
-    - os: linux
-      env: RUBY_USE=jruby-head
-    - os: osx
+#matrix:
+#  allow_failures:
+#    - os: linux
+#      env: RUBY_USE=jruby-head
+#    - os: osx
 
 addons:
   code_climate:
@@ -63,9 +63,9 @@ after_success:
   - gem install codeclimate-test-reporter
   - if [ ${TRAVIS_OS_NAME} == "linux" ] && [ ${RUBY_USE} == "rubinius-3" ]; then codeclimate-test-reporter ; fi
 
-#deploy:
-#  provider: rubygems
-#  api_key:
-#    secure: wRVHQHUQKc21TTRnVbAfriPMCqJH05Rkhi1LXF6IdZVS4etwiEN7uBjP41dwyZT4yAPYpRKtorbSrDZ9BLhApYuebp10ds0OcstY4/UKNnMJioO5FIyZWIFRBAWiuVdADKCJnL/gr97jwSR67Va7JJ9Ec6LOFH0+u6Wbj1pZIvWFcjJx2ZvDRnUZJ5bwCrb89iik7thyfDXlLweD84wTx7eCk5/cWnAuylZBWkb+wX32MwLycXkp4VLxRGdFbk+W3mXWYs9W0q8zMFbrK8oETrwgr11+1sye3eoi4cW1jtI+q6Zri4JnhYjYK4dUgaABYLo5UFDtPMbpmvnmfOGPmvLJx9efuJGbAr4hoDy2d7cL8jsiZgQ9WSBFNOiDZZD3iDbKWlNRB9ALO0T3rWTf5VotnpU34rrBS/wDlJMzv3ErO+jJkkGEeUPiz6nAdGdLsl6XbsBSFr3+FGR4FI7J7UKNmwizXAccBdPM5GtlZTdEq2PyGQsWxTyiOJ/HKEnDRhNQE3ZsP5IU7u1Gth+ye4rMAigdyiJcNIqv8FLYkBj08+oinq9mOla4fUboXtNQZQvOovS6D0yzFd2brkBWtHPwIK4GPpYjVUN06HnJHhTD8kM4NVkW/bdRKFjejzKIitX99LoK3LK7wTUNaIonl9/Y11z53pfbBhjq/qYkR7c=
-#  gemspec: fresh-mc.gemspec
+deploy:
+  provider: rubygems
+  api_key:
+    secure: wRVHQHUQKc21TTRnVbAfriPMCqJH05Rkhi1LXF6IdZVS4etwiEN7uBjP41dwyZT4yAPYpRKtorbSrDZ9BLhApYuebp10ds0OcstY4/UKNnMJioO5FIyZWIFRBAWiuVdADKCJnL/gr97jwSR67Va7JJ9Ec6LOFH0+u6Wbj1pZIvWFcjJx2ZvDRnUZJ5bwCrb89iik7thyfDXlLweD84wTx7eCk5/cWnAuylZBWkb+wX32MwLycXkp4VLxRGdFbk+W3mXWYs9W0q8zMFbrK8oETrwgr11+1sye3eoi4cW1jtI+q6Zri4JnhYjYK4dUgaABYLo5UFDtPMbpmvnmfOGPmvLJx9efuJGbAr4hoDy2d7cL8jsiZgQ9WSBFNOiDZZD3iDbKWlNRB9ALO0T3rWTf5VotnpU34rrBS/wDlJMzv3ErO+jJkkGEeUPiz6nAdGdLsl6XbsBSFr3+FGR4FI7J7UKNmwizXAccBdPM5GtlZTdEq2PyGQsWxTyiOJ/HKEnDRhNQE3ZsP5IU7u1Gth+ye4rMAigdyiJcNIqv8FLYkBj08+oinq9mOla4fUboXtNQZQvOovS6D0yzFd2brkBWtHPwIK4GPpYjVUN06HnJHhTD8kM4NVkW/bdRKFjejzKIitX99LoK3LK7wTUNaIonl9/Y11z53pfbBhjq/qYkR7c=
+  gemspec: fresh-mc.gemspec
 
