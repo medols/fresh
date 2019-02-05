@@ -16,9 +16,9 @@ rvm:
 
 before_install:
   - echo $TRAVIS_OS_NAME
-  - echo $RUBY_USE
+  - echo $TRAVIS_RUBY_VERSION
 #  - rvm get stable
-  - rvm list known
+#  - rvm list known
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$RUBY_USE" == "jruby-head" ]]; then rvm use jruby-head --install --binary --fuzzy   ; fi
 #  - if [[ "$TRAVIS_OS_NAME" == "osx"   && "$RUBY_USE" == "rubinius-3" ]]; then rvm use rubinius-3 --install --binary --fuzzy   ; fi
@@ -61,7 +61,7 @@ after_success:
 #  - ls -al coverage/.resultset.json
 #  - cat coverage/.resultset.json
   - gem install codeclimate-test-reporter
-  - if [ ${TRAVIS_OS_NAME} == "linux" ] && [ ${RUBY_USE} == "rubinius-3" ]; then codeclimate-test-reporter ; fi
+  - if [ ${TRAVIS_OS_NAME} == "linux" ] && [ ${TRAVIS_RUBY_VERSION} == "rbx-3" ]; then codeclimate-test-reporter ; fi
 
 deploy:
   provider: rubygems
