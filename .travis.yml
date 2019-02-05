@@ -7,7 +7,7 @@ os:
   - osx
 
 rvm:
-  - rbx-head
+  - rbx-3
   - jruby-head
 
 #env:
